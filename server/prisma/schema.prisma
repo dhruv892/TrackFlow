@@ -18,9 +18,10 @@ datasource db {
 }
 
 enum BugStatus {
-  open
-  working
-  closed
+	todo
+	in_progress
+	in_review
+	done
 }
 
 enum PriorityStates {
