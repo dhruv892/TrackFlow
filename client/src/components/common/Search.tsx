@@ -6,7 +6,7 @@ function Search() {
       <input
         type="text"
         placeholder="Search..."
-        className="w-full rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-inherit"
+        className="w-full rounded-md border border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 bg-inherit p-2"
       />
     </div>
   );

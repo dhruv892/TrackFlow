@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 
 function Board() {
   return (
-    <div className="flex gap-4 overflow-x-auto py-2 content-center items-center">
+    <div className="flex gap-4 overflow-x-auto py-2 items-center text-gray-300">
       <StatusCard status="To Do" />
       <StatusCard status="In Progress" />
       <StatusCard status="Completed" />

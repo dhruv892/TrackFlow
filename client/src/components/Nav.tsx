@@ -7,17 +7,17 @@ import { Plus, User } from "lucide-react";
 export default function Nav() {
   return (
     <>
-      <div className="flex pb-2 justify-between border-b-2 border-gray-700 content-cente items-center">
+      <div className="flex pb-2 pl-2 pr-2 justify-between border-b-2 border-gray-700 content-cente items-center">
         <div>
           <img src={logo} alt="Logo" width={50} height={50} />
         </div>
-        <div className="w-full flex items-center justify-center gap-2">
-          <div className="w-2/3">
+        <div className="w-full flex items-center justify-center gap-2 ">
+          <div className="w-2/3 ">
             <Search />
           </div>
 
           <button>
-            <Plus />
+            <Plus className="hover:text-white text-gray-500" />
           </button>
         </div>
         <div>
