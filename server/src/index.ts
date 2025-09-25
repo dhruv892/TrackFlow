@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.get("/api/health", (req, res) => {
+app.get("/api/health", (_req, res) => {
 	res.json({ message: "TrackFlow API is running!" });
 });
 

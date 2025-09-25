@@ -27,7 +27,7 @@ export const getBug = async (req: Request<BugParams>, res: Response) => {
 	try {
 		const id = parseInt(req.params.id);
 		if (!Number.isInteger(id))
-			return res.status(400).json({ error: "Invalid bug ID" });
+			return res.status(400).json({ msg: "Invalid bug ID" });
 
 		const bug = await prisma.bug.findUnique({
 			where: { id },
@@ -93,9 +93,72 @@ export const createBug = async (
 		res.status(201).json(bug);
 	} catch (error: any) {
 		if (error.code === "P2025") {
-			return res.status(404).json({ error: "User not found" });
+			return res.status(404).json({ msg: "User not found" });
 		}
 		console.log(error);
-		res.status(500).json({ error: "Failed to create bug" });
+		res.status(500).json({ msg: "Failed to create bug" });
 	}
 };
+
+type UpdateBugParams = {
+	id: string
+}
+
+type UpdateBugBody = {
+	title: string;
+	description?: string;
+	status?: BugStatus;
+	priority?: PriorityStates;
+};
+
+type UpdateNewData = {
+	title?: string;
+	description?: string;
+	status?: BugStatus;
+	priority?: PriorityStates;
+}
+
+export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugBody>, res: Response) => {
+	try {
+		// Step 1: First find the bug
+		const bugId = Number(req.params.id);
+		if (!Number.isInteger(bugId))
+			return res.status(400).json({ msg: "Valid userId is required" });
+
+		const bug = await prisma.bug.findUnique({
+			where: { id: bugId }
+		})
+
+		if (!bug)
+			return res.status(404).json({ msg: `Bug with id ${bugId} does not exist.` })
+
+
+		// Step 2: Update its fields
+		const { title, description, status, priority } = req.body;
+		const newData: UpdateNewData = {};
+
+		if (title?.trim())
+			newData.title = title;
+
+		if (description?.trim())
+			newData.description = description;
+
+		if (status)
+			newData.status = status;
+
+		if (priority)
+			newData.priority = priority;
+
+		// Step 3: Update the db
+		const updatedBug = await prisma.bug.update({
+			where: {
+				id: bugId
+			},
+			data: newData
+		});
+
+		res.json(updatedBug)
+	} catch (error) {
+		res.status(500).json({ msg: "Failed to create bug" })
+	}
+}
