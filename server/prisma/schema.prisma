@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// Basic data model:
+// - Comment: ID, bug_id, text, created_date
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BugStatus {
+  open
+  working
+  closed
+}
+
+enum PriorityStates {
+  low
+  medium
+  high
+  top
+}
+
+// - Bug: ID, title, description, status, priority, created_date, created_by, updated_date
+model Bug {
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(255)
+  description   String?
+  status        BugStatus
+  priority      PriorityStates
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  author        User     @relation(fields: [userId], references: [id])
+  userId        Int
+}
+
+// - User: ID, name, email (even if no auth initially)
+model User {
+  id      Int      @id @default(autoincrement())
+  email   String   @unique
+  name    String?
+  bugs Bug[]
+}

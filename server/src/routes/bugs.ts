@@ -1,29 +1,12 @@
 import { Router } from "express";
+import { getAllBugs, getBug } from "../controllers/bugController.js";
 
 const router = Router();
 
 // GET /api/bugs - Get all bugs
-router.get("/", (req, res) => {
-  res.json({
-    message: "Get all bugs endpoint",
-    bugs: [], // Empty for now
-  });
-});
-
-// POST /api/bugs - Create a new bug
-router.post("/", (req, res) => {
-  res.json({
-    message: "Create bug endpoint",
-    data: req.body,
-  });
-});
+router.get("/", getAllBugs);
 
 // GET /api/bugs/:id - Get single bug
-router.get("/:id", (req, res) => {
-  res.json({
-    message: `Get bug ${req.params.id} endpoint`,
-    id: req.params.id,
-  });
-});
+router.get("/:id", getBug);
 
 export default router;
