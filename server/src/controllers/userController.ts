@@ -20,11 +20,10 @@ export const createUser = async (req, res) => {
 			name,
 		},
 	});
-	console.log(user);
-	res.send("Received");
+	res.json(user);
 };
 
 export const getAllUsers = async (req, res) => {
 	const users = await prisma.user.findMany();
-	res.send(users);
+	res.json(users);
 };
