@@ -1,4 +1,8 @@
-import { PrismaClient } from "../../generated/prisma";
+import {
+	BugStatus,
+	PriorityStates,
+	PrismaClient,
+} from "../../generated/prisma/index.js";
 import type { Request, Response } from "express";
 
 const prisma = new PrismaClient();
@@ -47,8 +51,8 @@ export const getBug = async (req: Request<BugParams>, res: Response) => {
 type CreateBugBody = {
 	title: string;
 	description?: string;
-	status: "OPEN" | "WORKING" | "CLOSED";
-	priority: "LOW" | "MEDIUM" | "HIGH";
+	status: BugStatus;
+	priority: PriorityStates;
 	userId: number | string;
 };
 
@@ -78,7 +82,7 @@ export const createBug = async (
 			},
 		});
 		res.status(201).json(bug);
-	} catch (error) {
+	} catch (error: any) {
 		if (error.code === "P2025") {
 			return res.status(404).json({ error: "User not found" });
 		}

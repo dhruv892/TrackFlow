@@ -1,29 +1,46 @@
-/*
-model User {
-  id      Int      @id @default(autoincrement())
-  email   String   @unique
-  name    String?
-  bugs Bug[]
-}
-*/
-
-import { PrismaClient } from "../../generated/prisma";
+import { PrismaClient } from "../../generated/prisma/index.js";
+import type { Request, Response } from "express";
 
 const prisma = new PrismaClient();
 
-export const createUser = async (req, res) => {
-	const { email, name } = req.body;
-	console.log(email, name);
-	const user = await prisma.user.create({
-		data: {
-			email,
-			name,
-		},
-	});
-	res.json(user);
+type CreateUserBody = {
+	email: string;
+	name: string;
+};
+export const createUser = async (
+	req: Request<{}, any, CreateUserBody>,
+	res: Response
+) => {
+	try {
+		const { email, name } = req.body;
+
+		// Validation
+		if (!email?.trim())
+			return res.status(400).json({ error: "Email is required" });
+		if (!name?.trim())
+			return res.status(400).json({ error: "Name is required" });
+
+		const user = await prisma.user.create({
+			data: {
+				email: email.toLowerCase().trim(),
+				name: name.trim(),
+			},
+		});
+
+		res.json(user);
+	} catch (error: any) {
+		if (error?.code === "P2002") {
+			return res.status(409).json({ error: "Email already exists" });
+		}
+		return res.status(500).json({ error: "Failed to create user" });
+	}
 };
 
-export const getAllUsers = async (req, res) => {
-	const users = await prisma.user.findMany();
-	res.json(users);
+export const getAllUsers = async (req: Request, res: Response) => {
+	try {
+		const users = await prisma.user.findMany();
+		res.json(users);
+	} catch {
+		return res.status(500).json({ error: "Failed to fetch users" }); // error handling [web:51]
+	}
 };
