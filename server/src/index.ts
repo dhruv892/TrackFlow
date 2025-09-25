@@ -14,11 +14,11 @@ app.use(express.json());
 
 // Routes
 app.get("/api/health", (req, res) => {
-  res.json({ message: "TrackFlow API is running!" });
+	res.json({ message: "TrackFlow API is running!" });
 });
 
 app.use("/api", routes);
 
 app.listen(PORT, () => {
-  console.log(`🚀 TrackFlow server running on port ${PORT}`);
+	console.log(`🚀 TrackFlow server running on port ${PORT}`);
 });

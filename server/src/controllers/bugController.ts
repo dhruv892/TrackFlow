@@ -5,7 +5,7 @@ import {
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 
-export const getAllBugs = async (req: Request, res: Response) => {
+export const getAllBugs = async (_req: Request, res: Response) => {
 	try {
 		const bugs = await prisma.bug.findMany({
 			include: {
@@ -17,6 +17,7 @@ export const getAllBugs = async (req: Request, res: Response) => {
 		});
 		res.status(200).json(bugs);
 	} catch (e) {
+		console.log(e)
 		res.status(500).json({ msg: "Failed to fetch bugs" });
 	}
 };
@@ -48,36 +49,46 @@ export const getBug = async (req: Request<BugParams>, res: Response) => {
 
 type CreateBugBody = {
 	title: string;
+	userId: string;
 	description?: string;
-	status: BugStatus;
-	priority: PriorityStates;
-	userId: number | string;
+	status?: BugStatus;
+	priority?: PriorityStates;
 };
 
+// Only title and userId are mandatory  Others may and may not be received  We have 
+// to use default values in case of missing values
 export const createBug = async (
 	req: Request<{}, any, CreateBugBody>,
 	res: Response
 ) => {
 	try {
-		const { title, description, status, priority, userId } = req.body;
-		const userIdNum = Number(userId);
+		let { title, description, status, priority, userId } = req.body;
+		description = description ?? "";
+		status = status ?? BugStatus.todo;
+		priority = priority ?? PriorityStates.medium;
 
 		// Validation
 		if (!title?.trim())
 			return res.status(400).json({ msg: "Title is required" });
+
+		if (!userId?.trim()) {
+			return res.status(400).json({ msg: "UserId is required" });
+		}
+
+		const userIdNum = Number(userId);
 		if (!Number.isInteger(userIdNum))
 			return res.status(400).json({ msg: "Valid userId is required" });
 
+		const bugData = {
+			title: title.trim(),
+			description: description?.trim() || "",
+			status: status ?? BugStatus.todo,
+			priority: priority ?? PriorityStates.medium,
+			author: { connect: { id: userIdNum } }
+		}
+
 		const bug = await prisma.bug.create({
-			data: {
-				title: title.trim(),
-				description: description?.trim() || null,
-				status,
-				priority,
-				author: {
-					connect: { id: userIdNum },
-				},
-			},
+			data: bugData
 		});
 		res.status(201).json(bug);
 	} catch (error: any) {
