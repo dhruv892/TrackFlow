@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import type { Bug } from "../types/types";
 import { api } from "../api/api";
+import { Plus } from "lucide-react";
 
 function List() {
   const [bugs, setBugs] = useState<Bug[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -18,6 +21,43 @@ function List() {
       }
     })();
   }, []);
+
+  // submit new bug
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+
+    try {
+      // api.createBug(newBug)
+      const newBug = await api.createBug({
+        title,
+        status: "todo",
+        priority: "medium",
+        userId: "1",
+      });
+
+      // update UI immediately
+      setBugs((prev) => [newBug, ...prev]);
+      setTitle("");
+      // api.createBug(newBug);
+      setShowForm(false);
+    } catch (err) {
+      console.error("Error creating bug:", err);
+    }
+  };
+
+  const handleSave = async (id: number, field: keyof Bug, value: string) => {
+    try {
+      const updated = await api.updateBug(id, { [field]: value });
+      setBugs((prev) =>
+        prev.map((bug) =>
+          bug.id === id ? { ...bug, [field]: updated[field] } : bug
+        )
+      );
+    } catch (err) {
+      console.error("Update failed:", err);
+    }
+  };
 
   if (loading) return <div className="p-4">Loading...</div>;
 
@@ -52,15 +92,21 @@ function List() {
               key={bug.id}
               className="hover:bg-gray-800 transition-colors duration-150"
             >
-              <td className="px-4 py-2 border-b border-r border-gray-700 font-medium text-white">
+              {/* <td className="px-4 py-2 border-b border-r border-gray-700 font-medium text-white">
                 {bug.title}
               </td>
+
               <td className="px-4 py-2 border-b border-r border-gray-700 capitalize">
                 {bug.status}
               </td>
               <td className="px-4 py-2 border-b border-r border-gray-700">
                 {bug.priority}
-              </td>
+              </td> */}
+
+              <EditableCell bug={bug} field="title" onSave={handleSave} />
+              <EditableCell bug={bug} field="status" onSave={handleSave} />
+              <EditableCell bug={bug} field="priority" onSave={handleSave} />
+
               <td className="px-4 py-2 border-b border-r border-gray-700">
                 {bug.userId ?? "—"}
               </td>
@@ -76,10 +122,123 @@ function List() {
               </td>
             </tr>
           ))}
+          {!showForm ? (
+            <tr
+              onClick={() => setShowForm(true)}
+              className="hover:bg-gray-800 cursor-pointer transition duration-150"
+            >
+              <td
+                colSpan={6}
+                className="px-4 py-2 border-b border-gray-700 text-gray-400 hover:text-white"
+              >
+                <div className="flex gap-2 w-full">
+                  <Plus className="w-5 h-5" />
+                  <span>Create Bug</span>
+                </div>
+              </td>
+            </tr>
+          ) : (
+            <tr>
+              <td colSpan={6} className="p-3 bg-gray-900">
+                <form onSubmit={handleSubmit}>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    onBlur={() => setShowForm(false)}
+                    placeholder="Enter bug title and press Enter..."
+                    autoFocus
+                    className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none"
+                  />
+                </form>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
   );
+}
+
+function EditableCell({
+  bug,
+  field,
+  onSave,
+}: {
+  bug: Bug;
+  field: "title" | "status" | "priority";
+  onSave: (id: number, field: keyof Bug, value: string) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(bug[field]);
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (value !== bug[field]) {
+      onSave(bug.id, field, value);
+    }
+  };
+
+  // Dropdown options
+  const statusOptions = ["todo", "in_progress", "in_review", "done"];
+  const priorityOptions = ["low", "medium", "high", "top"];
+
+  // Title input
+  if (field === "title") {
+    return (
+      <td
+        className="px-4 py-2 border-b border-r border-gray-700 cursor-pointer"
+        onClick={() => setIsEditing(true)}
+      >
+        {isEditing ? (
+          <input
+            type="text"
+            value={value}
+            autoFocus
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleBlur();
+            }}
+            className="w-full bg-gray-800 text-white border border-gray-600 rounded px-2 py-1"
+          />
+        ) : (
+          <span>{value}</span>
+        )}
+      </td>
+    );
+  }
+
+  // Status or Priority dropdown
+  if (field === "status" || field === "priority") {
+    const options = field === "status" ? statusOptions : priorityOptions;
+    return (
+      <td
+        className="px-4 py-2 border-b border-r border-gray-700 cursor-pointer"
+        onClick={() => setIsEditing(true)}
+      >
+        {isEditing ? (
+          <select
+            value={value}
+            autoFocus
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={handleBlur}
+            className="bg-gray-800 text-white border border-gray-600 rounded px-2 py-1"
+          >
+            {options.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span>{value}</span>
+        )}
+      </td>
+    );
+  }
+
+  return <td>{bug[field]}</td>;
 }
 
 export default List;

@@ -1,5 +1,5 @@
 // types.ts
-export type BugStatus = "open" | "working" | "closed";
+export type BugStatus = "todo" | "in_progress" | "in_review" | "done";
 export type Priority = "low" | "medium" | "high" | "top";
 
 export interface Bug {
@@ -10,5 +10,5 @@ export interface Bug {
   priority: Priority;
   createdAt?: string;
   updatedAt?: string;
-  userId?: number;
+  userId?: number | string;
 }
