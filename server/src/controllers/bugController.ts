@@ -1,8 +1,9 @@
 import { PrismaClient } from "../../generated/prisma";
+import type { Request, Response } from "express";
 
 const prisma = new PrismaClient();
 
-export const getAllBugs = async (req, res) => {
+export const getAllBugs = async (req: Request, res: Response) => {
 	try {
 		const bugs = await prisma.bug.findMany({
 			include: {
@@ -18,7 +19,8 @@ export const getAllBugs = async (req, res) => {
 	}
 };
 
-export const getBug = async (req, res) => {
+type BugParams = { id: string }; // params for routes like /bugs/:id
+export const getBug = async (req: Request<BugParams>, res: Response) => {
 	try {
 		const id = parseInt(req.params.id);
 		if (!Number.isInteger(id))
@@ -42,7 +44,18 @@ export const getBug = async (req, res) => {
 	}
 };
 
-export const createBug = async (req, res) => {
+type CreateBugBody = {
+	title: string;
+	description?: string;
+	status: "OPEN" | "WORKING" | "CLOSED";
+	priority: "LOW" | "MEDIUM" | "HIGH";
+	userId: number | string;
+};
+
+export const createBug = async (
+	req: Request<{}, any, CreateBugBody>,
+	res: Response
+) => {
 	try {
 		const { title, description, status, priority, userId } = req.body;
 		const userIdNum = Number(userId);
