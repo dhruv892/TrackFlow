@@ -1,7 +1,5 @@
-import { PrismaClient } from "../../generated/prisma/index.js";
 import type { Request, Response } from "express";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma.js";
 
 type CreateUserBody = {
 	email: string;
