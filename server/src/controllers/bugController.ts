@@ -112,3 +112,22 @@ export const getBug = (req, res) => {
 	if (bug) return res.status(200).json(bug);
 	res.status(404).json({ msg: `Bug with id ${id} doesnt exist.` });
 };
+
+
+/*
+model Bug {
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(255)
+  description   String?
+  status        BugStatus
+  priority      PriorityStates
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  author        User     @relation(fields: [userId], references: [id])
+  userId        Int
+}
+*/
+export const createBug = (req, res) => {
+	console.log(req.body);
+	res.send("Received")
+};

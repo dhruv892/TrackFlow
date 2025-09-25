@@ -30,7 +30,7 @@ enum PriorityStates {
   top
 }
 
-// - Bug: ID, title, description, status, priority, created_date, created_by, updated_date
+// - Bug: ID, title, description, status, priority, created_date, author, updated_date
 model Bug {
   id            Int      @id @default(autoincrement())
   title         String   @db.VarChar(255)
