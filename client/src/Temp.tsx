@@ -1,4 +1,4 @@
-import { Search, Plus, User, FolderOpen, MoreVertical } from "lucide-react";
+import { Search, Plus, User, FolderOpen } from "lucide-react";
 import { useState } from "react";
 
 // Types

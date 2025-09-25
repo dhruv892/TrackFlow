@@ -1,11 +1,21 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
-import Temp from "./Temp";
+import Nav from "./components/Nav";
+import SideBar from "./components/SideBar";
+import Projectdashboard from "./components/ProjectDashboard";
 
 function App() {
-  return <Temp />;
+  return (
+    <div className="border-2 rounded-md p-2 border-gray-700">
+      <Nav />
+
+      <div className="flex pt-2">
+        <SideBar />
+        <Projectdashboard />
+      </div>
+    </div>
+  );
+
+  // return <Temp />;
 }
 
 export default App;
