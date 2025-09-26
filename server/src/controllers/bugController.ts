@@ -104,26 +104,19 @@ type UpdateBugParams = {
 	id: string
 }
 
-type UpdateBugBody = {
-	title: string;
+type UpdateBugPayload = {
+	title?: string;
 	description?: string;
 	status?: BugStatus;
 	priority?: PriorityStates;
 };
 
-type UpdateNewData = {
-	title?: string;
-	description?: string;
-	status?: BugStatus;
-	priority?: PriorityStates;
-}
-
-export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugBody>, res: Response) => {
+export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayload>, res: Response) => {
 	try {
 		// Step 1: First find the bug
 		const bugId = Number(req.params.id);
 		if (!Number.isInteger(bugId))
-			return res.status(400).json({ msg: "Valid userId is required" });
+			return res.status(400).json({ msg: "Valid bugId is required" });
 
 		const bug = await prisma.bug.findUnique({
 			where: { id: bugId }
@@ -135,18 +128,40 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugBody
 
 		// Step 2: Update its fields
 		const { title, description, status, priority } = req.body;
-		const newData: UpdateNewData = {};
+		const newData: UpdateBugPayload = {};
 
-		if (title?.trim())
-			newData.title = title;
+		// Validation
+		if (!title && !description && status === undefined && priority === undefined) {
+			return res.status(400).json({
+				msg: "At least one field (title, description, status or priority) must be provided for update."
+			})
+		}
 
-		if (description?.trim())
-			newData.description = description;
+		if (title !== undefined) {
+			const trimmedTitle = title.trim();
+			if (trimmedTitle.length === 0)
+				return res.status(400).json({
+					msg: "Title can not be empty or only whitespaces."
+				})
 
-		if (status)
+			newData.title = trimmedTitle;
+		}
+
+		if (description !== undefined) {
+			const trimmedDesc = description.trim();
+			if (trimmedDesc.length === 0) {
+				return res.status(400).json({
+					msg: "Description can not be empty or only whitespaces."
+				})
+			}
+
+			newData.description = trimmedDesc;
+		}
+
+		if (status !== undefined)
 			newData.status = status;
 
-		if (priority)
+		if (priority !== undefined)
 			newData.priority = priority;
 
 		// Step 3: Update the db
@@ -158,7 +173,12 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugBody
 		});
 
 		res.json(updatedBug)
-	} catch (error) {
-		res.status(500).json({ msg: "Failed to create bug" })
+	} catch (error: any) {
+		if (error.code === 'P2025') {
+			return res.status(404).json({ msg: "Bug not found during update" });
+		}
+
+		console.error('Update bug error:', error);
+		res.status(500).json({ msg: "Failed to update bug" });
 	}
 }
