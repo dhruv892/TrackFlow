@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createBug, getAllBugs, getBug, updateBug } from "../controllers/bugController.js";
+import { createBug, deleteBug, getAllBugs, getBug, updateBug } from "../controllers/bugController.js";
 
 const router = Router();
 
@@ -14,5 +14,8 @@ router.post("/", createBug);
 
 // PUT /api/bugs/:id - Update a bug
 router.put("/:id", updateBug)
+
+// DELETE /api/bugs/:id - Delete a bug
+router.delete("/:id", deleteBug)
 
 export default router;

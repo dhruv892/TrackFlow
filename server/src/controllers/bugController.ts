@@ -22,7 +22,7 @@ export const getAllBugs = async (_req: Request, res: Response) => {
 	}
 };
 
-type BugParams = { id: string }; // params for routes like /bugs/:id
+type BugParams = { id: string };
 export const getBug = async (req: Request<BugParams>, res: Response) => {
 	try {
 		const id = parseInt(req.params.id);
@@ -180,5 +180,58 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayl
 
 		console.error('Update bug error:', error);
 		res.status(500).json({ msg: "Failed to update bug" });
+	}
+}
+
+export const deleteBug = async (req: Request<BugParams>, res: Response) => {
+	try {
+		const bugId = Number(req.params.id);
+
+		// Validation
+		if (!Number.isInteger(bugId)) {
+			return res.status(400).json({
+				msg: "Invalid bug ID."
+			})
+		}
+
+		// Check if bug exists
+		const existingBug = await prisma.bug.findUnique({
+			where: { id: bugId }
+		});
+
+		if (!existingBug) {
+			return res.status(404).json({
+				msg: `Bug with id ${bugId} not found.`
+			})
+		}
+
+		const deletedBug = await prisma.bug.delete({
+			where: {
+				id: bugId
+			}
+		})
+
+		return res.status(200).json({
+			data: deletedBug,
+			msg: `Bug with id ${bugId} deleted successfully.`
+		})
+	} catch (error: any) {
+		console.error('Error deleting bug:', error);
+
+		if (error.code === 'P2025') {
+			return res.status(404).json({
+				msg: `Bug with id ${req.params.id} not found.`,
+			});
+		}
+
+		if (error.code === 'P2003') {
+			return res.status(409).json({
+				msg: "Cannot delete bug due to existing dependencies.",
+			});
+		}
+
+		return res.status(500).json({
+			msg: "Failed to delete bug. Please try again later.",
+		});
 	}
 }
