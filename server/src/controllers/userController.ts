@@ -27,6 +27,7 @@ export const createUser = async (
 
 		res.json(user);
 	} catch (error: any) {
+		console.error("Error creating the user:", error);
 		if (error?.code === "P2002") {
 			return res.status(409).json({ error: "Email already exists" });
 		}
@@ -34,11 +35,12 @@ export const createUser = async (
 	}
 };
 
-export const getAllUsers = async (req: Request, res: Response) => {
+export const getAllUsers = async (_req: Request, res: Response) => {
 	try {
 		const users = await prisma.user.findMany();
 		res.json(users);
-	} catch {
+	} catch (error) {
+		console.error("Error retreiving all the user:", error);
 		return res.status(500).json({ error: "Failed to fetch users" });
 	}
 };

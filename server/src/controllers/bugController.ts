@@ -2,10 +2,11 @@ import {
 	BugStatus,
 	PriorityStates,
 } from "../../generated/prisma/index.js";
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
+import { CustomError } from "../errors/CustomError.js";
 
-export const getAllBugs = async (_req: Request, res: Response) => {
+export const getAllBugs = async (_req: Request, res: Response, next: NextFunction) => {
 	try {
 		const bugs = await prisma.bug.findMany({
 			include: {
@@ -16,18 +17,19 @@ export const getAllBugs = async (_req: Request, res: Response) => {
 			orderBy: { createdAt: "desc" },
 		});
 		res.status(200).json(bugs);
-	} catch (e) {
-		console.log(e)
-		res.status(500).json({ msg: "Failed to fetch bugs" });
+	} catch (error) {
+		console.error(error)
+		next(new CustomError(500, "Failed to fetch bugs", "InternalServerError"));
 	}
 };
 
 type BugParams = { id: string };
-export const getBug = async (req: Request<BugParams>, res: Response) => {
+export const getBug = async (req: Request<BugParams>, res: Response, next: any) => {
 	try {
 		const id = parseInt(req.params.id);
-		if (!Number.isInteger(id))
-			return res.status(400).json({ msg: "Invalid bug ID" });
+
+		if (Number.isNaN(id) || !Number.isInteger(id))
+			throw new CustomError(400, "Invalid bugId", "ValidationError");
 
 		const bug = await prisma.bug.findUnique({
 			where: { id },
@@ -39,11 +41,15 @@ export const getBug = async (req: Request<BugParams>, res: Response) => {
 		});
 
 		if (!bug)
-			return res.status(404).json({ msg: `Bug with id ${id} not found` });
+			throw new CustomError(404, `Bug with id ${id} not found.`, "NotFoundError");
 
 		res.status(200).json(bug);
-	} catch (e) {
-		res.status(500).json({ msg: "Failed to fetch bug" });
+	} catch (error) {
+		console.error(error)
+		if (error instanceof CustomError)
+			next(error)
+		else
+			next(new CustomError(500, "Failed to create bug", "InternalServerError"));
 	}
 };
 
@@ -59,7 +65,8 @@ type CreateBugBody = {
 // to use default values in case of missing values
 export const createBug = async (
 	req: Request<{}, any, CreateBugBody>,
-	res: Response
+	res: Response,
+	next: NextFunction
 ) => {
 	try {
 		let { title, description, status, priority, userId } = req.body;
@@ -69,15 +76,18 @@ export const createBug = async (
 
 		// Validation
 		if (!title?.trim())
-			return res.status(400).json({ msg: "Title is required" });
+			throw new CustomError(400, "Title is required.", "ValidationError")
 
 		if (!userId?.trim()) {
-			return res.status(400).json({ msg: "UserId is required" });
+			throw new CustomError(400, "UserId is required.", "ValidationError")
 		}
 
 		const userIdNum = Number(userId);
 		if (!Number.isInteger(userIdNum))
-			return res.status(400).json({ msg: "Valid userId is required" });
+			throw new CustomError(400, "Valid UserId is required.", "ValidationError")
+
+
+		// TODO: Check if user exists
 
 		const bugData = {
 			title: title.trim(),
@@ -87,16 +97,22 @@ export const createBug = async (
 			author: { connect: { id: userIdNum } }
 		}
 
+
 		const bug = await prisma.bug.create({
 			data: bugData
 		});
 		res.status(201).json(bug);
 	} catch (error: any) {
-		if (error.code === "P2025") {
-			return res.status(404).json({ msg: "User not found" });
+		console.error("Error creating the bug:", error);
+
+		if (error instanceof CustomError)
+			next(error)
+		else {
+			if (error.code === "P2025") {
+				next(new CustomError(404, "User not found", "NotFoundError"));
+			}
+			next(new CustomError(500, "Failed to create bug", "InternalServerError"));
 		}
-		console.log(error);
-		res.status(500).json({ msg: "Failed to create bug" });
 	}
 };
 
@@ -111,19 +127,19 @@ type UpdateBugPayload = {
 	priority?: PriorityStates;
 };
 
-export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayload>, res: Response) => {
+export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayload>, res: Response, next: NextFunction) => {
 	try {
 		// Step 1: First find the bug
 		const bugId = Number(req.params.id);
 		if (!Number.isInteger(bugId))
-			return res.status(400).json({ msg: "Valid bugId is required" });
+			throw new CustomError(400, "Valid bugId is required.", "ValidationError")
 
 		const bug = await prisma.bug.findUnique({
 			where: { id: bugId }
 		})
 
 		if (!bug)
-			return res.status(404).json({ msg: `Bug with id ${bugId} does not exist.` })
+			throw new CustomError(404, `Bug with id ${bugId} does not exist.`, "NotFoundError");
 
 
 		// Step 2: Update its fields
@@ -131,30 +147,19 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayl
 		const newData: UpdateBugPayload = {};
 
 		// Validation
-		if (!title && !description && status === undefined && priority === undefined) {
-			return res.status(400).json({
-				msg: "At least one field (title, description, status or priority) must be provided for update."
-			})
-		}
+		if (!title && !description && status === undefined && priority === undefined)
+			throw new CustomError(400, "At least one field (title, description, status or priority) must be provided for update.", "ValidationError");
 
 		if (title !== undefined) {
 			const trimmedTitle = title.trim();
 			if (trimmedTitle.length === 0)
-				return res.status(400).json({
-					msg: "Title can not be empty or only whitespaces."
-				})
+				throw new CustomError(400, "Title can not be empty or only whitespaces.", "ValidationError")
 
 			newData.title = trimmedTitle;
 		}
 
 		if (description !== undefined) {
 			const trimmedDesc = description.trim();
-			if (trimmedDesc.length === 0) {
-				return res.status(400).json({
-					msg: "Description can not be empty or only whitespaces."
-				})
-			}
-
 			newData.description = trimmedDesc;
 		}
 
@@ -174,36 +179,33 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayl
 
 		res.json(updatedBug)
 	} catch (error: any) {
-		if (error.code === 'P2025') {
-			return res.status(404).json({ msg: "Bug not found during update" });
-		}
-
 		console.error('Update bug error:', error);
-		res.status(500).json({ msg: "Failed to update bug" });
+		if (error instanceof CustomError)
+			next(error)
+		else {
+			if (error.code === 'P2025')
+				next(new CustomError(404, "Bug not found during update", "InternalServerError"))
+
+			next(new CustomError(500, "Failed to update bug", "InternalServerError"))
+		}
 	}
 }
 
-export const deleteBug = async (req: Request<BugParams>, res: Response) => {
+export const deleteBug = async (req: Request<BugParams>, res: Response, next: NextFunction) => {
 	try {
 		const bugId = Number(req.params.id);
 
 		// Validation
-		if (!Number.isInteger(bugId)) {
-			return res.status(400).json({
-				msg: "Invalid bug ID."
-			})
-		}
+		if (!Number.isInteger(bugId))
+			throw new CustomError(400, "Invaid bugId", "ValidationError")
 
 		// Check if bug exists
 		const existingBug = await prisma.bug.findUnique({
 			where: { id: bugId }
 		});
 
-		if (!existingBug) {
-			return res.status(404).json({
-				msg: `Bug with id ${bugId} not found.`
-			})
-		}
+		if (!existingBug)
+			throw new CustomError(404, `Bug with id ${bugId} not found.`, "NotFoundError")
 
 		const deletedBug = await prisma.bug.delete({
 			where: {
@@ -216,22 +218,16 @@ export const deleteBug = async (req: Request<BugParams>, res: Response) => {
 			msg: `Bug with id ${bugId} deleted successfully.`
 		})
 	} catch (error: any) {
-		console.error('Error deleting bug:', error);
+		console.error("Error deleting the bug:", error);
 
-		if (error.code === 'P2025') {
-			return res.status(404).json({
-				msg: `Bug with id ${req.params.id} not found.`,
-			});
+		if (error instanceof CustomError)
+			next(error)
+		else {
+			if (error.code === 'P2025') {
+				next(new CustomError(404, `Bug with id ${req.params.id} not found.`, "NotFoundError"))
+			}
+
+			next(new CustomError(500, "Failed to delete bug", "InternalServerError"))
 		}
-
-		if (error.code === 'P2003') {
-			return res.status(409).json({
-				msg: "Cannot delete bug due to existing dependencies.",
-			});
-		}
-
-		return res.status(500).json({
-			msg: "Failed to delete bug. Please try again later.",
-		});
 	}
 }
