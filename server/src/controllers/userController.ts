@@ -1,5 +1,6 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
+import { ConflictError, CustomError, InternalServerError, ValidationError } from "../errors/CustomError.js";
 
 type CreateUserBody = {
 	email: string;
@@ -7,16 +8,17 @@ type CreateUserBody = {
 };
 export const createUser = async (
 	req: Request<{}, any, CreateUserBody>,
-	res: Response
+	res: Response,
+	next: NextFunction
 ) => {
 	try {
 		const { email, name } = req.body;
 
 		// Validation
 		if (!email?.trim())
-			return res.status(400).json({ error: "Email is required" });
+			throw new ValidationError("Email is required.")
 		if (!name?.trim())
-			return res.status(400).json({ error: "Name is required" });
+			throw new ValidationError("Name is required.")
 
 		const user = await prisma.user.create({
 			data: {
@@ -27,20 +29,24 @@ export const createUser = async (
 
 		res.json(user);
 	} catch (error: any) {
-		console.error("Error creating the user:", error);
-		if (error?.code === "P2002") {
-			return res.status(409).json({ error: "Email already exists" });
-		}
-		return res.status(500).json({ error: "Failed to create user" });
+		console.error(error);
+
+		if (error instanceof CustomError)
+			return next(error);
+		if (error?.code === "P2002")
+			return next(new ConflictError("Email already exists."))
+
+		return next(new InternalServerError("Failed to create user."))
 	}
+}
 };
 
-export const getAllUsers = async (_req: Request, res: Response) => {
+export const getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
 	try {
 		const users = await prisma.user.findMany();
 		res.json(users);
 	} catch (error) {
-		console.error("Error retreiving all the user:", error);
-		return res.status(500).json({ error: "Failed to fetch users" });
+		console.error(error);
+		return next(new InternalServerError("Failed to fetch users."))
 	}
 };

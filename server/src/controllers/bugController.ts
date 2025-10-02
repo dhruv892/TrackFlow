@@ -4,7 +4,7 @@ import {
 } from "../../generated/prisma/index.js";
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
-import { CustomError } from "../errors/CustomError.js";
+import { CustomError, InternalServerError, NotFoundError, ValidationError } from "../errors/CustomError.js";
 
 export const getAllBugs = async (_req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -19,7 +19,7 @@ export const getAllBugs = async (_req: Request, res: Response, next: NextFunctio
 		res.status(200).json(bugs);
 	} catch (error) {
 		console.error(error)
-		next(new CustomError(500, "Failed to fetch bugs", "InternalServerError"));
+		return next(new InternalServerError("Failed to fetch bugs."));
 	}
 };
 
@@ -29,7 +29,7 @@ export const getBug = async (req: Request<BugParams>, res: Response, next: any) 
 		const id = parseInt(req.params.id);
 
 		if (Number.isNaN(id) || !Number.isInteger(id))
-			throw new CustomError(400, "Invalid bugId", "ValidationError");
+			throw new ValidationError("Invalid bugId");
 
 		const bug = await prisma.bug.findUnique({
 			where: { id },
@@ -41,15 +41,15 @@ export const getBug = async (req: Request<BugParams>, res: Response, next: any) 
 		});
 
 		if (!bug)
-			throw new CustomError(404, `Bug with id ${id} not found.`, "NotFoundError");
+			throw new NotFoundError(`Bug with id ${id} not found.`);
 
 		res.status(200).json(bug);
 	} catch (error) {
 		console.error(error)
 		if (error instanceof CustomError)
-			next(error)
+			return next(error)
 		else
-			next(new CustomError(500, "Failed to create bug", "InternalServerError"));
+			return next(new InternalServerError("Failed to create bug"));
 	}
 };
 
@@ -76,15 +76,15 @@ export const createBug = async (
 
 		// Validation
 		if (!title?.trim())
-			throw new CustomError(400, "Title is required.", "ValidationError")
+			throw new ValidationError("Title is required.")
 
 		if (!userId?.trim()) {
-			throw new CustomError(400, "UserId is required.", "ValidationError")
+			throw new ValidationError("UserId is required.")
 		}
 
 		const userIdNum = Number(userId);
 		if (!Number.isInteger(userIdNum))
-			throw new CustomError(400, "Valid UserId is required.", "ValidationError")
+			throw new ValidationError("Valid UserId is required.")
 
 
 		// TODO: Check if user exists
@@ -106,12 +106,13 @@ export const createBug = async (
 		console.error("Error creating the bug:", error);
 
 		if (error instanceof CustomError)
-			next(error)
+			return next(error)
 		else {
 			if (error.code === "P2025") {
-				next(new CustomError(404, "User not found", "NotFoundError"));
+				return next(new NotFoundError("User not found"));
+			} else {
+				return next(new InternalServerError("Failed to create bug"));
 			}
-			next(new CustomError(500, "Failed to create bug", "InternalServerError"));
 		}
 	}
 };
@@ -132,14 +133,14 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayl
 		// Step 1: First find the bug
 		const bugId = Number(req.params.id);
 		if (!Number.isInteger(bugId))
-			throw new CustomError(400, "Valid bugId is required.", "ValidationError")
+			throw new ValidationError("Valid bugId is required.")
 
 		const bug = await prisma.bug.findUnique({
 			where: { id: bugId }
 		})
 
 		if (!bug)
-			throw new CustomError(404, `Bug with id ${bugId} does not exist.`, "NotFoundError");
+			throw new NotFoundError(`Bug with id ${bugId} does not exist.`);
 
 
 		// Step 2: Update its fields
@@ -148,12 +149,12 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayl
 
 		// Validation
 		if (!title && !description && status === undefined && priority === undefined)
-			throw new CustomError(400, "At least one field (title, description, status or priority) must be provided for update.", "ValidationError");
+			throw new ValidationError("At least one field (title, description, status or priority) must be provided for update.");
 
 		if (title !== undefined) {
 			const trimmedTitle = title.trim();
 			if (trimmedTitle.length === 0)
-				throw new CustomError(400, "Title can not be empty or only whitespaces.", "ValidationError")
+				throw new ValidationError("Title can not be empty or only whitespaces.")
 
 			newData.title = trimmedTitle;
 		}
@@ -181,12 +182,12 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayl
 	} catch (error: any) {
 		console.error('Update bug error:', error);
 		if (error instanceof CustomError)
-			next(error)
+			return next(error)
 		else {
 			if (error.code === 'P2025')
-				next(new CustomError(404, "Bug not found during update", "InternalServerError"))
+				return next(new NotFoundError("Bug not found during update"))
 
-			next(new CustomError(500, "Failed to update bug", "InternalServerError"))
+			return next(new InternalServerError("Failed to update bug"))
 		}
 	}
 }
@@ -197,7 +198,7 @@ export const deleteBug = async (req: Request<BugParams>, res: Response, next: Ne
 
 		// Validation
 		if (!Number.isInteger(bugId))
-			throw new CustomError(400, "Invaid bugId", "ValidationError")
+			throw new ValidationError("Invaid bugId")
 
 		// Check if bug exists
 		const existingBug = await prisma.bug.findUnique({
@@ -205,7 +206,7 @@ export const deleteBug = async (req: Request<BugParams>, res: Response, next: Ne
 		});
 
 		if (!existingBug)
-			throw new CustomError(404, `Bug with id ${bugId} not found.`, "NotFoundError")
+			throw new NotFoundError(`Bug with id ${bugId} not found.`)
 
 		const deletedBug = await prisma.bug.delete({
 			where: {
@@ -221,13 +222,13 @@ export const deleteBug = async (req: Request<BugParams>, res: Response, next: Ne
 		console.error("Error deleting the bug:", error);
 
 		if (error instanceof CustomError)
-			next(error)
+			return next(error)
 		else {
 			if (error.code === 'P2025') {
-				next(new CustomError(404, `Bug with id ${req.params.id} not found.`, "NotFoundError"))
+				return next(new NotFoundError(`Bug with id ${req.params.id} not found.`))
 			}
 
-			next(new CustomError(500, "Failed to delete bug", "InternalServerError"))
+			return next(new InternalServerError("Failed to delete bug"))
 		}
 	}
 }
