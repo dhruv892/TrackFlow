@@ -39,11 +39,15 @@ export const createUser = async (
 		return next(new InternalServerError("Failed to create user."))
 	}
 }
-};
 
 export const getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
 	try {
-		const users = await prisma.user.findMany();
+		const users = await prisma.user.findMany({
+			include: {
+				comments: true,
+				bugs: true
+			}
+		});
 		res.json(users);
 	} catch (error) {
 		console.error(error);
