@@ -64,4 +64,6 @@ model Comment {
 	authorId	Int
 	bug       Bug      @relation(fields: [bugId], references: [id])
   bugId     Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
