@@ -22,6 +22,9 @@ router.delete("/:id", deleteBug)
 // GET /api/bugs/:bugId/comments
 router.get("/:bugId/comments", getAllComments);
 
+// POST /api/bugs/:bugId/comments
 router.post("/:bugId/comment", createComment)
+
+// POST /api/bugs/:bugId/comments/:commentId
 
 export default router;

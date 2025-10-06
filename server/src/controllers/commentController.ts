@@ -93,9 +93,72 @@ export const createComment = async (req: Request<BugIdParam, any, createCommentB
 	}
 }
 
-/*
- * Update comment
- * Get one comment
- * Edit one comment
- * delete one comment
- */
+type UpdateCommentParams = {
+	commentId: string
+}
+type UpdateCommentBody = {
+	content: string
+}
+
+export const updateComment = async (req: Request<UpdateCommentParams, any, UpdateCommentBody>, res: Response, next: NextFunction) => {
+	try {
+		const commentId = Number(req.params.commentId);
+		const { content } = req.body;
+
+		if (!content || content.trim().length === 0) {
+			throw new ValidationError("Content is required.")
+		}
+
+		if (Number.isNaN(commentId) || !Number.isInteger(commentId)) {
+			throw new ValidationError("CommentId is invalid")
+		}
+
+		const comment = await prisma.comment.update({
+			where: { id: commentId },
+			data: { content: content }
+		});
+
+		res.status(200).json(comment);
+	} catch (error) {
+		console.error(error);
+		if (error instanceof CustomError)
+			return next(error);
+		else
+			return next(new InternalServerError("Internal server error"));
+	}
+}
+
+type DeleteCommentParam = {
+	commentId: string
+}
+export const deleteComment = async (req: Request<DeleteCommentParam, any, {}>, res: Response, next: NextFunction) => {
+	try {
+		const commentId = Number(req.params.commentId);
+
+
+		if (Number.isNaN(commentId) || !Number.isInteger(commentId)) {
+			throw new ValidationError("CommentId is invalid")
+		}
+
+		const comment = await prisma.comment.findUnique({
+			where: { id: commentId }
+		})
+
+		if (!comment)
+			throw new NotFoundError(`Comment with id ${commentId} does not exist.`)
+
+		const deletedComment = await prisma.comment.delete({
+			where: { id: commentId }
+		})
+
+		return res.status(200).json(deletedComment);
+
+	} catch (error) {
+		console.error(error);
+		if (error instanceof CustomError)
+			return next(error);
+		else
+			return next(new InternalServerError("Internal server error"))
+	}
+}
+

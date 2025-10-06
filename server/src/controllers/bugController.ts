@@ -175,7 +175,7 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayl
 			data: newData
 		});
 
-		res.json(updatedBug)
+		res.status(200).json(updatedBug)
 	} catch (error: any) {
 		console.error('Update bug error:', error);
 		if (error instanceof CustomError)
