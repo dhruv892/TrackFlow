@@ -13,6 +13,7 @@ export const getAllBugs = async (_req: Request, res: Response, next: NextFunctio
 				author: {
 					select: { name: true },
 				},
+				comments: true
 			},
 			orderBy: { createdAt: "desc" },
 		});
@@ -37,6 +38,7 @@ export const getBug = async (req: Request<BugParams>, res: Response, next: any) 
 				author: {
 					select: { name: true },
 				},
+				comments: true
 			},
 		});
 
@@ -55,7 +57,7 @@ export const getBug = async (req: Request<BugParams>, res: Response, next: any) 
 
 type CreateBugBody = {
 	title: string;
-	userId: string;
+	userId: number;
 	description?: string;
 	status?: BugStatus;
 	priority?: PriorityStates;
@@ -78,14 +80,9 @@ export const createBug = async (
 		if (!title?.trim())
 			throw new ValidationError("Title is required.")
 
-		if (!userId?.trim()) {
-			throw new ValidationError("UserId is required.")
+		if (!Number.isInteger(userId) || Number.isNaN(userId)) {
+			throw new ValidationError("UserId must be valid.")
 		}
-
-		const userIdNum = Number(userId);
-		if (!Number.isInteger(userIdNum))
-			throw new ValidationError("Valid UserId is required.")
-
 
 		// TODO: Check if user exists
 
@@ -94,7 +91,7 @@ export const createBug = async (
 			description: description?.trim() || "",
 			status: status ?? BugStatus.todo,
 			priority: priority ?? PriorityStates.medium,
-			author: { connect: { id: userIdNum } }
+			author: { connect: { id: userId } }
 		}
 
 
@@ -178,7 +175,7 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayl
 			data: newData
 		});
 
-		res.json(updatedBug)
+		res.status(200).json(updatedBug)
 	} catch (error: any) {
 		console.error('Update bug error:', error);
 		if (error instanceof CustomError)

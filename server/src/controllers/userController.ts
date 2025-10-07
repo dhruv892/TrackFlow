@@ -38,20 +38,21 @@ export const createUser = async (
     if (error?.code === "P2002")
       return next(new ConflictError("Email already exists."));
 
-    return next(new InternalServerError("Failed to create user."));
-  }
-};
+		return next(new InternalServerError("Failed to create user."))
+	}
+}
 
-export const getAllUsers = async (
-  _req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const users = await prisma.user.findMany();
-    res.json(users);
-  } catch (error) {
-    console.error(error);
-    return next(new InternalServerError("Failed to fetch users."));
-  }
+export const getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
+	try {
+		const users = await prisma.user.findMany({
+			include: {
+				comments: true,
+				bugs: true
+			}
+		});
+		res.json(users);
+	} catch (error) {
+		console.error(error);
+		return next(new InternalServerError("Failed to fetch users."))
+	}
 };

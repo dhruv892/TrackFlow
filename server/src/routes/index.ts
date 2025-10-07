@@ -1,12 +1,14 @@
 import { Router, type NextFunction, type Response, type Request } from "express";
 import bugsRouter from "./bugs.js";
 import userRouter from "./users.js";
+import commentsRouter from "./comments.js";
 import { CustomError } from "../errors/CustomError.js";
 
 const router = Router();
 
 router.use("/bugs", bugsRouter);
-router.use("/users/", userRouter);
+router.use("/users", userRouter);
+router.use("/comments", commentsRouter)
 
 // Error middleware
 router.use((err: CustomError | Error, _req: Request, res: Response, _next: NextFunction) => {
