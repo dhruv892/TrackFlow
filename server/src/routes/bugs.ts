@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createBug, deleteBug, getAllBugs, getBug, updateBug } from "../controllers/bugController.js";
+import { assignUserToBug, createBug, deleteBug, getAllBugs, getBug, updateBug } from "../controllers/bugController.js";
 import { createComment, getAllComments } from "../controllers/commentController.js";
 
 const router = Router();
@@ -23,7 +23,10 @@ router.delete("/:id", deleteBug)
 router.get("/:bugId/comments", getAllComments);
 
 // POST /api/bugs/:bugId/comments
-router.post("/:bugId/comment", createComment)
+router.post("/:bugId/comments", createComment)
+
+// POST /api/bugs/:bugId
+router.post("/:bugId", assignUserToBug);
 
 
 export default router;

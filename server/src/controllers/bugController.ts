@@ -13,7 +13,8 @@ export const getAllBugs = async (_req: Request, res: Response, next: NextFunctio
 				author: {
 					select: { name: true },
 				},
-				comments: true
+				comments: true,
+				assignedTo: true
 			},
 			orderBy: { createdAt: "desc" },
 		});
@@ -38,7 +39,8 @@ export const getBug = async (req: Request<BugParams>, res: Response, next: any) 
 				author: {
 					select: { name: true },
 				},
-				comments: true
+				comments: true,
+				assignedTo: true
 			},
 		});
 
@@ -227,5 +229,47 @@ export const deleteBug = async (req: Request<BugParams>, res: Response, next: Ne
 
 			return next(new InternalServerError("Failed to delete bug"))
 		}
+	}
+}
+
+// Bug assignment
+type AssignUserToBugParams = {
+	bugId: string
+}
+type AssignUserToBugBody = {
+	userIds: number[]
+}
+export const assignUserToBug = async (req: Request<AssignUserToBugParams, any, AssignUserToBugBody>, res: Response, next: NextFunction) => {
+	try {
+		const bugId = Number(req.params.bugId);
+
+		if (Number.isNaN(bugId) || !Number.isInteger(bugId))
+			throw new ValidationError("Invalid bugId");
+
+		const bug = await prisma.bug.findUnique({
+			where: { id: bugId }
+		})
+
+		if (!bug)
+			throw new NotFoundError(`Bug with id ${bugId} not found.`)
+
+		const userIds = req.body.userIds;
+
+		const updatedBug = await prisma.bug.update({
+			where: { id: bugId },
+			data: {
+				assignedTo: {
+					connect: userIds.map(id => ({ id: id }))
+				},
+			},
+			include: {
+				assignedTo: true
+			}
+		})
+
+		res.status(200).json(updatedBug);
+
+	} catch (error) {
+		next(error);
 	}
 }
