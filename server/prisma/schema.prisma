@@ -40,18 +40,20 @@ model Bug {
   priority      PriorityStates
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  author        User     @relation(fields: [userId], references: [id])
+  author        User     @relation("AuthoredBugs", fields: [userId], references: [id])
   userId        Int
 	comments			Comment[]
+	assignedTo		User[]	@relation("AssignedBugs")
 }
 
 // - User: ID, name, email (even if no auth initially)
 model User {
-  id      Int      @id @default(autoincrement())
-  email   String   @unique
-  name    String?
-  bugs Bug[]
-	comments Comment[]
+  id				Int				@id @default(autoincrement())
+  email			String		@unique
+  name			String?
+  bugs			Bug[]			@relation("AuthoredBugs")
+	comments	Comment[]
+	assignedBugs	Bug[]	@relation("AssignedBugs")
 }
 
 // Comment: Id, content, author, bug
