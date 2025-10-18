@@ -3,13 +3,16 @@ import { createUser, getAllUsers, getUser } from "../controllers/userController.
 
 const router = Router();
 
-// GET all users
+// GET /api/users
 router.get("/", getAllUsers);
 
-// GET one user
+// GET /api/users/:userId
 router.get("/:userId", getUser)
 
-// POST create user
+// POST /api/users/
+// body:
+//	email: string
+//	name: string
 router.post("/", createUser);
 
 export default router;

@@ -26,10 +26,10 @@ export const getAllComments = async (req: Request<BugIdParam>, res: Response, ne
 	}
 }
 
-type CommentIdParam = { id: string }
+type CommentIdParam = { commentId: string }
 export const getComment = async (req: Request<CommentIdParam>, res: Response, next: NextFunction) => {
 	try {
-		const id = Number(req.params.id);
+		const id = Number(req.params.commentId);
 
 		if (!id || Number.isNaN(id) || !Number.isInteger(id)) {
 			throw new ValidationError("Invalid ID provided.")

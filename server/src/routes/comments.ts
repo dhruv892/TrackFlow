@@ -3,13 +3,15 @@ import { deleteComment, getComment, updateComment } from "../controllers/comment
 
 const router = Router();
 
-// GET /api/comments/:id
-router.get("/:id", getComment)
+// GET /api/comments/:commentId
+router.get("/:commentId", getComment)
 
 // PUT /api/comments/:commentId
+// body:
+//	content: string
 router.put("/:commentId", updateComment)
 
-// DELEtE /api/comments/:commentId
+// DELETE /api/comments/:commentId
 router.delete("/:commentId", deleteComment)
 
 export default router;
