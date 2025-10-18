@@ -16,6 +16,9 @@ const checkIfUserExists = async (id: number | string) => {
 		where: { id: userId }
 	})
 
+	if (!user)
+		throw new NotFoundError(`User with id ${userId} not found.`)
+
 	return user;
 }
 
@@ -95,10 +98,7 @@ export const createBug = async (
 		if (!title?.trim())
 			throw new ValidationError("Title is required.")
 
-		const user = checkIfUserExists(userId)
-		if (!user)
-			throw new ValidationError(`User with id ${userId} does not exist.`)
-
+		checkIfUserExists(userId)
 
 		const bugData = {
 			title: title.trim(),
