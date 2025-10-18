@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { assignUserToBug, createBug, deleteBug, getAllBugs, getBug, removeAllAssignedUsers, updateBug } from "../controllers/bugController.js";
+import { assignUserToBug, createBug, deleteBug, getAllBugs, getBug, removeAllAssignedUsers, removeAssignedUsers, updateBug } from "../controllers/bugController.js";
 import { createComment, getAllComments } from "../controllers/commentController.js";
 
 const router = Router();
@@ -11,6 +11,7 @@ router.post("/:bugId/comments", createComment);
 // Assignees
 router.post("/:bugId/assignees", assignUserToBug);
 router.delete("/:bugId/assignees/all", removeAllAssignedUsers);
+router.delete("/:bugId/assignees", removeAssignedUsers);
 
 // Bugs
 router.get("/", getAllBugs);

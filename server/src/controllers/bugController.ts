@@ -6,6 +6,19 @@ import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import { CustomError, InternalServerError, NotFoundError, ValidationError } from "../errors/CustomError.js";
 
+const checkIfUserExists = async (id: number | string) => {
+	const userId = Number(id);
+	if (!Number.isInteger(userId) || Number.isNaN(userId)) {
+		throw new ValidationError("UserId must be valid.")
+	}
+
+	const user = await prisma.user.findUnique({
+		where: { id: userId }
+	})
+
+	return user;
+}
+
 export const getAllBugs = async (_req: Request, res: Response, next: NextFunction) => {
 	try {
 		const bugs = await prisma.bug.findMany({
@@ -82,11 +95,10 @@ export const createBug = async (
 		if (!title?.trim())
 			throw new ValidationError("Title is required.")
 
-		if (!Number.isInteger(userId) || Number.isNaN(userId)) {
-			throw new ValidationError("UserId must be valid.")
-		}
+		const user = checkIfUserExists(userId)
+		if (!user)
+			throw new ValidationError(`User with id ${userId} does not exist.`)
 
-		// TODO: Check if user exists
 
 		const bugData = {
 			title: title.trim(),
@@ -283,10 +295,11 @@ export const assignUserToBug = async (req: Request<AssignUserToBugParams, any, A
 	}
 }
 
-type RemoveAllAssignedParams = {
+
+type RemoveAssignedParams = {
 	bugId: string
 }
-export const removeAllAssignedUsers = async (req: Request<RemoveAllAssignedParams, any, {}>, res: Response, next: NextFunction) => {
+export const removeAllAssignedUsers = async (req: Request<RemoveAssignedParams, any, {}>, res: Response, next: NextFunction) => {
 	try {
 		const bugId = Number(req.params.bugId);
 
@@ -306,6 +319,50 @@ export const removeAllAssignedUsers = async (req: Request<RemoveAllAssignedParam
 		})
 
 		res.status(200).json(updatedBug)
+	} catch (error) {
+		next(error);
+	}
+}
+
+type removeAssignedUsersBody = {
+	userIds: number[]
+}
+export const removeAssignedUsers = async (req: Request<RemoveAssignedParams, any, removeAssignedUsersBody>, res: Response, next: NextFunction) => {
+	try {
+		const bugId = Number(req.params.bugId);
+		if (Number.isNaN(bugId) || !Number.isInteger(bugId))
+			throw new ValidationError(`Invalid bug id received.`)
+
+		const userIds = req.body.userIds;
+		if (userIds === undefined || userIds.length === 0)
+			throw new ValidationError("UserIds are required.")
+
+		const bug = await prisma.bug.findUnique({
+			where: { id: bugId },
+			include: {
+				assignedTo: true
+			}
+		})
+
+		if (!bug)
+			throw new NotFoundError(`Bug with id ${bugId} not found.`)
+
+		const newUsers = bug.assignedTo.filter(user => !userIds.includes(user.id));
+
+		const updatedBug = await prisma.bug.update({
+			where: { id: bugId },
+			data: {
+				assignedTo: {
+					set: newUsers
+				}
+			},
+			include: {
+				assignedTo: true
+			}
+		})
+
+		res.status(200).json(updatedBug)
+
 	} catch (error) {
 		next(error);
 	}
