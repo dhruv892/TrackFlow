@@ -10,6 +10,7 @@ import {
 type CreateUserBody = {
 	email: string;
 	name: string;
+	password: string
 };
 export const createUser = async (
 	req: Request<{}, any, CreateUserBody>,
@@ -17,17 +18,33 @@ export const createUser = async (
 	next: NextFunction
 ) => {
 	try {
-		const { email, name } = req.body;
+		// TODO password has to be hashed/encrypted
+		const { email, name, password } = req.body;
 
 		// Validation
 		if (!email?.trim()) throw new ValidationError("Email is required.");
 		if (!name?.trim()) throw new ValidationError("Name is required.");
+		if (!password?.trim()) throw new ValidationError("Password is required.");
+
+		const emailData = email.trim().toLowerCase()
+		const duplicate = await prisma.user.findUnique({
+			where: {
+				email: emailData,
+			}
+		})
+
+		if (duplicate)
+			throw new ConflictError("An account with this email already exists.")
 
 		const user = await prisma.user.create({
 			data: {
-				email: email.toLowerCase().trim(),
+				email: emailData,
 				name: name.trim(),
+				password: password.trim(),
 			},
+			omit: {
+				password: true
+			}
 		});
 
 		res.json(user);
@@ -35,8 +52,6 @@ export const createUser = async (
 		console.error(error);
 
 		if (error instanceof CustomError) return next(error);
-		if (error?.code === "P2002")
-			return next(new ConflictError("Email already exists."));
 
 		return next(new InternalServerError("Failed to create user."))
 	}
@@ -49,6 +64,9 @@ export const getAllUsers = async (_req: Request, res: Response, next: NextFuncti
 				comments: true,
 				bugs: true,
 				assignedBugs: true
+			},
+			omit: {
+				password: true
 			}
 		});
 		res.json(users);
@@ -75,6 +93,9 @@ export const getUser = async (req: Request<getUserParma, any, {}>, res: Response
 				comments: true,
 				bugs: true,
 				assignedBugs: true
+			},
+			omit: {
+				password: true
 			}
 		})
 

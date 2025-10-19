@@ -1,12 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-// Basic data model:
-// - Comment: ID, bug_id, text, created_date
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -31,7 +22,6 @@ enum PriorityStates {
   top
 }
 
-// - Bug: ID, title, description, status, priority, created_date, author, updated_date
 model Bug {
   id            Int      @id @default(autoincrement())
   title         String   @db.VarChar(255)
@@ -46,26 +36,25 @@ model Bug {
 	assignedTo		User[]	@relation("AssignedBugs")
 }
 
-// - User: ID, name, email (even if no auth initially)
 model User {
-  id				Int				@id @default(autoincrement())
-  email			String		@unique
-  name			String?
-  bugs			Bug[]			@relation("AuthoredBugs")
-	comments	Comment[]
-	assignedBugs	Bug[]	@relation("AssignedBugs")
+  id						Int				@id @default(autoincrement())
+  email					String		@unique
+  name					String?
+	password			String
+  bugs					Bug[]			@relation("AuthoredBugs")
+	comments			Comment[]
+	assignedBugs	Bug[]			@relation("AssignedBugs")
+  createdAt     DateTime	@default(now())
+  updatedAt     DateTime	@updatedAt
 }
 
-// Comment: Id, content, author, bug
-// All users need an array of their comments
-// All bugs need an array of comments
 model Comment {
-	id				Int @id @default(autoincrement())
+	id				Int			 @id @default(autoincrement())
 	content		String
 	author    User     @relation(fields: [authorId], references: [id])
 	authorId	Int
 	bug       Bug      @relation(fields: [bugId], references: [id])
   bugId     Int
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
