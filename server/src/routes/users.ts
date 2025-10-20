@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createUser, deleteUser, getAllUsers, getUser, updateUser } from "../controllers/userController.js";
+import { createUser, deleteUser, getAllUsers, getUser, getUserDeletionInfo, updateUser } from "../controllers/userController.js";
 
 const router = Router();
 
@@ -21,6 +21,9 @@ router.post("/", createUser);
 //	name?: string,
 //	password?: string
 router.put("/:userId", updateUser)
+
+// GET /api/users/:userId/delete-info
+router.get("/:userId/delete-info", getUserDeletionInfo)
 
 // DELETE /api/users/:userId
 router.delete("/:userId", deleteUser)
