@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createUser, getAllUsers, getUser } from "../controllers/userController.js";
+import { createUser, getAllUsers, getUser, updateUser } from "../controllers/userController.js";
 
 const router = Router();
 
@@ -14,5 +14,12 @@ router.get("/:userId", getUser)
 //	email: string
 //	name: string
 router.post("/", createUser);
+
+// PUT /api/users/:userId
+// body:
+//	email?: string,
+//	name?: string,
+//	password?: string
+router.put("/:userId", updateUser)
 
 export default router;

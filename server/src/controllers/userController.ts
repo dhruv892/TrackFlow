@@ -4,6 +4,7 @@ import {
 	ConflictError,
 	CustomError,
 	InternalServerError,
+	NotFoundError,
 	ValidationError,
 } from "../errors/CustomError.js";
 
@@ -57,6 +58,67 @@ export const createUser = async (
 	}
 }
 
+type updateUserParam = {
+	userId: string,
+}
+type updateUserPayload = {
+	email?: string,
+	name?: string,
+	password?: string
+}
+export const updateUser = async (req: Request<updateUserParam, any, updateUserPayload>, res: Response, next: NextFunction) => {
+	try {
+		const userId = Number(req.params.userId);
+		if (Number.isNaN(userId) || !Number.isInteger(userId)) {
+			throw new ValidationError("UserId is invalid.")
+		}
+
+		const user = await prisma.user.findUnique({
+			where: { id: userId }
+		})
+
+		if (!user)
+			throw new NotFoundError(`User with id ${userId} not found.`)
+
+		const { email, name, password } = req.body;
+		let updateData = Object();
+
+		if (email !== undefined && email.trim().length !== 0) {
+			const duplicate = await prisma.user.findUnique({
+				where: {
+					email: email.toLowerCase().trim()
+				}
+			})
+
+			if (duplicate)
+				throw new ValidationError("An account with this email already exists.")
+			updateData.email = email.toLowerCase().trim();
+		}
+
+		if (name !== undefined && name.trim().length !== 0) {
+			updateData.name = name.trim();
+		}
+
+		if (password !== undefined && password.trim().length !== 0) {
+			updateData.password = password.trim();
+		}
+
+		const updatedUser = await prisma.user.update({
+			where: { id: userId },
+			data: updateData,
+			omit: {
+				password: true
+			}
+		})
+
+		res.json(updatedUser)
+
+	} catch (error) {
+		return next(error)
+	}
+}
+
+
 export const getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
 	try {
 		const users = await prisma.user.findMany({
@@ -77,10 +139,10 @@ export const getAllUsers = async (_req: Request, res: Response, next: NextFuncti
 };
 
 
-type getUserParma = {
+type getUserParam = {
 	userId: string,
 }
-export const getUser = async (req: Request<getUserParma, any, {}>, res: Response, next: NextFunction) => {
+export const getUser = async (req: Request<getUserParam, any, {}>, res: Response, next: NextFunction) => {
 	try {
 		const userId = Number(req.params.userId);
 		if (Number.isNaN(userId) || !Number.isInteger(userId)) {
