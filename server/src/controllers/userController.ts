@@ -118,6 +118,28 @@ export const updateUser = async (req: Request<updateUserParam, any, updateUserPa
 	}
 }
 
+type deleteUserParams = {
+	userId: string
+}
+export const deleteUser = async (req: Request<deleteUserParams, any, {}>, res: Response, next: NextFunction) => {
+	try {
+		// TODO figure out a way to delete bugs and comments created by the user tobe deleted.
+		const userId = Number(req.params.userId);
+		if (Number.isNaN(userId) || !Number.isInteger(userId))
+			throw new ValidationError("Invalid userId received.")
+
+		const deletedUser = await prisma.user.delete({
+			where: {
+				id: userId
+			}
+		})
+
+		res.json(deletedUser)
+	} catch (error) {
+		next(error);
+	}
+}
+
 
 export const getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
 	try {
