@@ -9,12 +9,6 @@ router.get("/", getAllUsers);
 // GET /api/users/:userId
 router.get("/:userId", getUser)
 
-// POST /api/users/
-// body:
-//	email: string
-//	name: string
-router.post("/", createUser);
-
 // PUT /api/users/:userId
 // body:
 //	email?: string,
@@ -28,6 +22,5 @@ router.get("/:userId/delete-info", getUserDeletionInfo)
 // DELETE /api/users/:userId
 router.delete("/:userId", deleteUser)
 
-router.post("/login", loginUser)
 
 export default router;

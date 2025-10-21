@@ -2,7 +2,8 @@ type ErrorName =
 	"NotFoundError" |
 	"ValidationError" |
 	"InternalServerError" |
-	"ConflictError"
+	"ConflictError" |
+	"AccessDenied"
 
 export class CustomError extends Error {
 	statusCode: number;
@@ -19,6 +20,12 @@ export class CustomError extends Error {
 export class NotFoundError extends CustomError {
 	constructor(message: string) {
 		super(404, message, "NotFoundError");
+	}
+}
+
+export class AccessDeniedError extends CustomError {
+	constructor(message: string) {
+		super(404, message, "AccessDenied");
 	}
 }
 

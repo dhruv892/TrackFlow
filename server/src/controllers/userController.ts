@@ -16,7 +16,6 @@ type loginUserPayload = {
 }
 export const loginUser = async (req: Request<{}, any, loginUserPayload>, res: Response, next: NextFunction) => {
 	try {
-		console.log("HIT")
 		const { email, password } = req.body;
 		const user = await prisma.user.findUnique({
 			where: {
