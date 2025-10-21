@@ -7,6 +7,37 @@ import {
 	NotFoundError,
 	ValidationError,
 } from "../errors/CustomError.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+type loginUserPayload = {
+	email: string,
+	password: string
+}
+export const loginUser = async (req: Request<{}, any, loginUserPayload>, res: Response, next: NextFunction) => {
+	try {
+		console.log("HIT")
+		const { email, password } = req.body;
+		const user = await prisma.user.findUnique({
+			where: {
+				email: email.toLowerCase().trim(),
+			}
+		})
+
+		if (!user)
+			throw new NotFoundError("User not found.")
+
+		const isMatch = await bcrypt.compare(password, user.password);
+		if (!isMatch)
+			throw new ValidationError("Invalid credentials.")
+
+		const token = jwt.sign({ userId: user.id }, String(process.env.JWT_SECRET), { expiresIn: '1d' });
+		res.json({ token })
+
+	} catch (error) {
+		next(error);
+	}
+}
 
 type CreateUserBody = {
 	email: string;
@@ -37,11 +68,12 @@ export const createUser = async (
 		if (duplicate)
 			throw new ConflictError("An account with this email already exists.")
 
+		const hashedPassword = await bcrypt.hash(password.trim(), 10);
 		const user = await prisma.user.create({
 			data: {
 				email: emailData,
 				name: name.trim(),
-				password: password.trim(),
+				password: hashedPassword
 			},
 			omit: {
 				password: true
