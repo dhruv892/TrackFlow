@@ -6,6 +6,19 @@ import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import { CustomError, InternalServerError, NotFoundError, ValidationError } from "../errors/CustomError.js";
 
+const checkIfUserExists = async (id: number | string) => {
+	const userId = Number(id);
+	if (!Number.isInteger(userId) || Number.isNaN(userId)) {
+		throw new ValidationError("UserId must be valid.")
+	}
+
+	const user = await prisma.user.findUnique({
+		where: { id: userId }
+	})
+
+	return user;
+}
+
 export const getAllBugs = async (_req: Request, res: Response, next: NextFunction) => {
 	try {
 		const bugs = await prisma.bug.findMany({
@@ -13,7 +26,8 @@ export const getAllBugs = async (_req: Request, res: Response, next: NextFunctio
 				author: {
 					select: { name: true },
 				},
-				comments: true
+				comments: true,
+				assignedTo: true
 			},
 			orderBy: { createdAt: "desc" },
 		});
@@ -24,10 +38,10 @@ export const getAllBugs = async (_req: Request, res: Response, next: NextFunctio
 	}
 };
 
-type BugParams = { id: string };
+type BugParams = { bugId: string };
 export const getBug = async (req: Request<BugParams>, res: Response, next: any) => {
 	try {
-		const id = parseInt(req.params.id);
+		const id = parseInt(req.params.bugId);
 
 		if (Number.isNaN(id) || !Number.isInteger(id))
 			throw new ValidationError("Invalid bugId");
@@ -38,7 +52,8 @@ export const getBug = async (req: Request<BugParams>, res: Response, next: any) 
 				author: {
 					select: { name: true },
 				},
-				comments: true
+				comments: true,
+				assignedTo: true
 			},
 		});
 
@@ -80,11 +95,10 @@ export const createBug = async (
 		if (!title?.trim())
 			throw new ValidationError("Title is required.")
 
-		if (!Number.isInteger(userId) || Number.isNaN(userId)) {
-			throw new ValidationError("UserId must be valid.")
-		}
+		const user = checkIfUserExists(userId)
+		if (!user)
+			throw new ValidationError(`User with id ${userId} does not exist.`)
 
-		// TODO: Check if user exists
 
 		const bugData = {
 			title: title.trim(),
@@ -115,7 +129,7 @@ export const createBug = async (
 };
 
 type UpdateBugParams = {
-	id: string
+	bugId: string
 }
 
 type UpdateBugPayload = {
@@ -128,7 +142,7 @@ type UpdateBugPayload = {
 export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayload>, res: Response, next: NextFunction) => {
 	try {
 		// Step 1: First find the bug
-		const bugId = Number(req.params.id);
+		const bugId = Number(req.params.bugId);
 		if (!Number.isInteger(bugId))
 			throw new ValidationError("Valid bugId is required.")
 
@@ -191,7 +205,7 @@ export const updateBug = async (req: Request<UpdateBugParams, any, UpdateBugPayl
 
 export const deleteBug = async (req: Request<BugParams>, res: Response, next: NextFunction) => {
 	try {
-		const bugId = Number(req.params.id);
+		const bugId = Number(req.params.bugId);
 
 		// Validation
 		if (!Number.isInteger(bugId))
@@ -222,10 +236,134 @@ export const deleteBug = async (req: Request<BugParams>, res: Response, next: Ne
 			return next(error)
 		else {
 			if (error.code === 'P2025') {
-				return next(new NotFoundError(`Bug with id ${req.params.id} not found.`))
+				return next(new NotFoundError(`Bug with id ${req.params.bugId} not found.`))
 			}
 
 			return next(new InternalServerError("Failed to delete bug"))
 		}
+	}
+}
+
+// Bug assignment
+type AssignUserToBugParams = {
+	bugId: string
+}
+type AssignUserToBugBody = {
+	userIds: number[]
+}
+export const assignUserToBug = async (req: Request<AssignUserToBugParams, any, AssignUserToBugBody>, res: Response, next: NextFunction) => {
+	try {
+		const bugId = Number(req.params.bugId);
+
+		if (Number.isNaN(bugId) || !Number.isInteger(bugId))
+			throw new ValidationError("Invalid bugId");
+
+		const bug = await prisma.bug.findUnique({
+			where: { id: bugId }
+		})
+
+		if (!bug)
+			throw new NotFoundError(`Bug with id ${bugId} not found.`)
+
+		const userIds = req.body.userIds;
+		const users = await prisma.user.findMany({
+			where: {
+				id: { in: userIds }
+			}
+		});
+
+		if (users.length !== userIds.length) {
+			throw new ValidationError("One or more user IDs are invalid");
+		}
+
+		const updatedBug = await prisma.bug.update({
+			where: { id: bugId },
+			data: {
+				assignedTo: {
+					connect: userIds.map(id => ({ id: id }))
+				},
+			},
+			include: {
+				assignedTo: true
+			}
+		})
+
+		res.status(200).json(updatedBug);
+
+	} catch (error) {
+		next(error);
+	}
+}
+
+
+type RemoveAssignedParams = {
+	bugId: string
+}
+export const removeAllAssignedUsers = async (req: Request<RemoveAssignedParams, any, {}>, res: Response, next: NextFunction) => {
+	try {
+		const bugId = Number(req.params.bugId);
+
+		if (Number.isNaN(bugId) || !Number.isInteger(bugId))
+			throw new ValidationError("Invalid bugId received.")
+
+		const updatedBug = await prisma.bug.update({
+			where: { id: bugId },
+			data: {
+				assignedTo: {
+					set: []
+				}
+			},
+			include: {
+				assignedTo: true
+			}
+		})
+
+		res.status(200).json(updatedBug)
+	} catch (error) {
+		next(error);
+	}
+}
+
+type removeAssignedUsersBody = {
+	userIds: number[]
+}
+export const removeAssignedUsers = async (req: Request<RemoveAssignedParams, any, removeAssignedUsersBody>, res: Response, next: NextFunction) => {
+	try {
+		const bugId = Number(req.params.bugId);
+		if (Number.isNaN(bugId) || !Number.isInteger(bugId))
+			throw new ValidationError(`Invalid bug id received.`)
+
+		const userIds = req.body.userIds;
+		if (userIds === undefined || userIds.length === 0)
+			throw new ValidationError("UserIds are required.")
+
+		const bug = await prisma.bug.findUnique({
+			where: { id: bugId },
+			include: {
+				assignedTo: true
+			}
+		})
+
+		if (!bug)
+			throw new NotFoundError(`Bug with id ${bugId} not found.`)
+
+		const newUsers = bug.assignedTo.filter(user => !userIds.includes(user.id));
+
+		const updatedBug = await prisma.bug.update({
+			where: { id: bugId },
+			data: {
+				assignedTo: {
+					set: newUsers
+				}
+			},
+			include: {
+				assignedTo: true
+			}
+		})
+
+		res.status(200).json(updatedBug)
+
+	} catch (error) {
+		next(error);
 	}
 }
