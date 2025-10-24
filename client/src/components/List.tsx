@@ -1,35 +1,21 @@
 import React, { useEffect, useState } from "react";
 import type { Bug } from "../types/types";
 // import { api } from "../api/api";
-import { Loader2, Plus } from "lucide-react";
+import { Ellipsis, Loader2, Plus } from "lucide-react";
 import { useBugStore } from "../store/bugs";
+import BugDetailModal from "./BugDetailModal";
 
 function List() {
-  // const [bugs, setBugs] = useState<Bug[]>([]);
-  // const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
-
-  //const { getAllBugs, isBugsLoading, allBugs } = useBugStore();
   const { getAllBugs, isBugsLoading, allBugs, addBug, updateBug, deleteBug } =
     useBugStore();
+
+  const [selectedBug, setSelectedBug] = useState<Bug | null>(null);
 
   useEffect(() => {
     getAllBugs();
   }, [getAllBugs]);
-
-  // useEffect(() => {
-  //   (async () => {
-  //     try {
-  //       const data = (await api.getBugs()) as Bug[];
-  //       setBugs(data);
-  //     } catch (e) {
-  //       console.error(e);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   })();
-  // }, []);
 
   // submit new bug
   const handleAddBug = async (e: React.FormEvent) => {
@@ -101,7 +87,7 @@ function List() {
           {allBugs.map((bug: Bug) => (
             <tr
               key={bug.id}
-              className="hover:bg-gray-800 transition-colors duration-150"
+              className="group hover:bg-gray-800 transition-colors duration-150"
             >
               {/* <td className="px-4 py-2 border-b border-r border-gray-700 font-medium text-white">
                 {bug.title}
@@ -114,12 +100,23 @@ function List() {
                 {bug.priority}
               </td> */}
 
-              <EditableCell bug={bug} field="title" onSave={handleUpdateBug} />
-              <EditableCell bug={bug} field="status" onSave={handleUpdateBug} />
+              <EditableCell
+                bug={bug}
+                field="title"
+                onSave={handleUpdateBug}
+                onEllipsisClick={() => setSelectedBug(bug)}
+              />
+              <EditableCell
+                bug={bug}
+                field="status"
+                onSave={handleUpdateBug}
+                onEllipsisClick={() => setSelectedBug(bug)}
+              />
               <EditableCell
                 bug={bug}
                 field="priority"
                 onSave={handleUpdateBug}
+                onEllipsisClick={() => setSelectedBug(bug)}
               />
 
               <td className="px-4 py-2 border-b border-r border-gray-700">
@@ -185,6 +182,14 @@ function List() {
           No bugs found. Click "Create Bug" to add one.
         </div>
       )}
+
+      {selectedBug && (
+        <BugDetailModal
+          bug={selectedBug}
+          onClose={() => setSelectedBug(null)}
+          onUpdate={handleUpdateBug}
+        />
+      )}
     </div>
   );
 }
@@ -193,10 +198,12 @@ function EditableCell({
   bug,
   field,
   onSave,
+  onEllipsisClick,
 }: {
   bug: Bug;
   field: "title" | "status" | "priority";
   onSave: (id: number, field: keyof Bug, value: string) => void;
+  onEllipsisClick?: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(bug[field]);
@@ -216,7 +223,7 @@ function EditableCell({
   if (field === "title") {
     return (
       <td
-        className="px-4 py-2 border-b border-r border-gray-700 cursor-pointer"
+        className="flex justify-between px-4 py-2 border-b border-r border-gray-700 cursor-pointer"
         onClick={() => setIsEditing(true)}
       >
         {isEditing ? (
@@ -233,6 +240,15 @@ function EditableCell({
           />
         ) : (
           <span>{value}</span>
+        )}
+        {!isEditing && (
+          <Ellipsis
+            className="opacity-0 group-hover:opacity-100 transition-opacity  w-4 h-4 inline-block ml-2 text-gray-500"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEllipsisClick?.();
+            }}
+          />
         )}
       </td>
     );
