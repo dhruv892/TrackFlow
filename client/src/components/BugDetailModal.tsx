@@ -1,6 +1,14 @@
-import { useState } from "react";
-import type { Bug } from "../types/types";
+import { useEffect, useState } from "react";
+import type { Bug, Comment } from "../types/types";
 import { Calendar, User, X } from "lucide-react";
+import CommentItem from "./CommentItem";
+import AddCommentForm from "./AddCommentForm";
+import {
+  addCommentForBug,
+  deleteComment,
+  fetchCommentsForBug,
+  updateComment,
+} from "../api/commentsApi";
 
 interface BugDetailModalProps {
   bug: Bug;
@@ -9,33 +17,86 @@ interface BugDetailModalProps {
 }
 
 function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
-  const [comment, setComment] = useState("");
-  const [comments, setComments] = useState<
-    Array<{ id: number; text: string; author: string; date: string }>
-  >([
-    {
-      id: 1,
-      text: "This needs to be fixed ASAP",
-      author: "John Doe",
-      date: "2024-01-15",
-    },
-  ]);
+  // const [comment, setComment] = useState("");
+  // const [comments, setComments] = useState<
+  //   Array<{ id: number; text: string; author: string; date: string }>
+  // >([
+  //   {
+  //     id: 1,
+  //     text: "This needs to be fixed ASAP",
+  //     author: "John Doe",
+  //     date: "2024-01-15",
+  //   },
+  // ]);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!comment.trim()) return;
+  // const handleAddComment = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!comment.trim()) return;
 
-    setComments([
-      ...comments,
-      {
-        id: Date.now(),
-        text: comment,
-        author: "Current User",
-        date: new Date().toISOString().split("T")[0],
-      },
-    ]);
-    setComment("");
+  //   setComments([
+  //     ...comments,
+  //     {
+  //       id: Date.now(),
+  //       text: comment,
+  //       author: "Current User",
+  //       date: new Date().toISOString().split("T")[0],
+  //     },
+  //   ]);
+  //   setComment("");
+  // };
+
+  // useEffect(() => {
+  //   setLoading(true);
+  //   fetchComments(bug.id).then(() => {
+  //     setLoading(false);
+  //   });
+  // }, [bug.id]);
+
+  useEffect(() => {
+    let isMounted = true; // to avoid setting state on unmounted component
+    setLoading(true);
+    fetchCommentsForBug(bug.id).then((fetchedComments) => {
+      console.log("Fetched comments:", fetchedComments);
+      if (isMounted) {
+        setComments(fetchedComments.comments);
+        setLoading(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [bug.id]);
+
+  if (loading) {
+    return <div>Loading comments...</div>;
+  }
+
+  const handleAddComment = async (content: string): Promise<void> => {
+    const newComment = await addCommentForBug(
+      // if (!bug) return;
+      bug.id,
+      content,
+      /* currentUserId */ 1
+    );
+    setComments((prev) => [...prev, newComment]);
   };
+
+  const handleUpdateComment = async (
+    id: number,
+    content: string
+  ): Promise<void> => {
+    const updated = await updateComment(id, content);
+    setComments((prev) => prev.map((c) => (c.id === id ? updated : c)));
+  };
+
+  const handleDeleteComment = async (id: number): Promise<void> => {
+    await deleteComment(id);
+    setComments((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  // if (loading) return <div>Loading comments...</div>;
 
   return (
     <div
@@ -82,7 +143,7 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
               </h3>
 
               <div className="space-y-4 mb-4">
-                {comments.map((c) => (
+                {/* {comments.map((c) => (
                   <div key={c.id} className="bg-gray-800 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-medium">
@@ -97,10 +158,20 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
                     </div>
                     <p className="text-gray-300">{c.text}</p>
                   </div>
+                ))} */}
+                {comments.map((c) => (
+                  <CommentItem
+                    key={c.id}
+                    comment={c}
+                    onUpdate={handleUpdateComment}
+                    onDelete={handleDeleteComment}
+                  />
                 ))}
+                <AddCommentForm onAdd={handleAddComment} />
+                <button onClick={onClose}>Close</button>
               </div>
 
-              {/* Add Comment Form */}
+              {/* Add Comment Form
               <form onSubmit={handleAddComment} className="space-y-2">
                 <textarea
                   value={comment}
@@ -115,7 +186,7 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
                 >
                   Add Comment
                 </button>
-              </form>
+              </form> */}
             </div>
           </div>
 
