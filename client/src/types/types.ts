@@ -10,5 +10,5 @@ export interface Bug {
   priority: Priority;
   createdAt?: string;
   updatedAt?: string;
-  userId?: number | string;
+  userId?: number;
 }

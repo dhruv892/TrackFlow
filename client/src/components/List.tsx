@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import type { Bug } from "../types/types";
-// import { api } from "../api/api";
 import { Loader2, Plus } from "lucide-react";
 import { useBugStore } from "../store/bugs";
 import BugDetailModal from "./BugDetailModal";
@@ -9,16 +8,14 @@ import EditableCell from "./EditableCell";
 function List() {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
+  const [selectedBug, setSelectedBug] = useState<Bug | null>(null);
   const { getAllBugs, isBugsLoading, allBugs, addBug, updateBug, deleteBug } =
     useBugStore();
-
-  const [selectedBug, setSelectedBug] = useState<Bug | null>(null);
 
   useEffect(() => {
     getAllBugs();
   }, [getAllBugs]);
 
-  // submit new bug
   const handleAddBug = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -27,7 +24,7 @@ function List() {
       title,
       status: "todo",
       priority: "medium",
-      userId: "1",
+      userId: 1,
     });
 
     setTitle("");
@@ -48,8 +45,6 @@ function List() {
     }
   };
 
-  // if (isBugsLoading) return <div className="p-4">Loading...</div>;
-  // Show loading only on initial load
   if (isBugsLoading && allBugs.length === 0) {
     return (
       <div className="p-4 flex items-center gap-2">
@@ -62,9 +57,9 @@ function List() {
   return (
     <div className="overflow-x-auto p-4">
       <table className="min-w-full border border-gray-700 text-left text-sm">
-        <thead className="bg-gray-900 text-gray-300">
+        <thead className="bg-gray-900 text-gray-300 sticky top-0">
           <tr>
-            <th className="px-4 py-2  border-b border-r  border-gray-700">
+            <th className="px-4 py-2 border-b border-r border-gray-700">
               Title
             </th>
             <th className="px-4 py-2 border-b border-r border-gray-700">
@@ -82,8 +77,12 @@ function List() {
             <th className="px-4 py-2 border-b border-r border-gray-700">
               Updated
             </th>
+            <th className="px-4 py-2 border-b border-gray-700 text-center">
+              Actions
+            </th>
           </tr>
         </thead>
+
         <tbody>
           {allBugs.map((bug: Bug) => (
             <tr
@@ -108,21 +107,28 @@ function List() {
                 onSave={handleUpdateBug}
                 onEllipsisClick={() => setSelectedBug(bug)}
               />
-
               <td className="px-4 py-2 border-b border-r border-gray-700">
                 {bug.userId ?? "—"}
               </td>
               <td className="px-4 py-2 border-b border-r border-gray-700">
                 {bug.createdAt
-                  ? new Date(bug.createdAt).toLocaleDateString()
+                  ? new Date(bug.createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
                   : "—"}
               </td>
-              <td className="px-4 py-2 border-b border-gray-700">
+              <td className="px-4 py-2 border-b border-r border-gray-700">
                 {bug.updatedAt
-                  ? new Date(bug.updatedAt).toLocaleDateString()
+                  ? new Date(bug.updatedAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
                   : "—"}
               </td>
-              <td className="px-4 py-2 border-b border-gray-700">
+              <td className="px-4 py-2 border-b border-gray-700 text-center">
                 <button
                   onClick={() => handleDelete(bug.id)}
                   className="text-red-400 hover:text-red-300 transition-colors px-2 py-1 text-xs"
@@ -133,13 +139,14 @@ function List() {
               </td>
             </tr>
           ))}
+
           {!showForm ? (
             <tr
               onClick={() => setShowForm(true)}
               className="hover:bg-gray-800 cursor-pointer transition duration-150"
             >
               <td
-                colSpan={6}
+                colSpan={7}
                 className="px-4 py-2 border-b border-gray-700 text-gray-400 hover:text-white"
               >
                 <div className="flex gap-2 w-full">
@@ -150,44 +157,28 @@ function List() {
             </tr>
           ) : (
             <tr>
-              <td colSpan={6} className="p-3 bg-gray-900">
-                {/* <form onSubmit={handleAddBug}>
+              <td colSpan={7} className="p-3 bg-gray-900">
+                <form
+                  onSubmit={handleAddBug}
+                  className="flex gap-2 items-center"
+                >
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     onBlur={() => setShowForm(false)}
-                    placeholder="Enter bug title and press Enter..."
+                    placeholder="Enter bug title..."
                     autoFocus
                     className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none"
                   />
-                </form> */}
-                <form onSubmit={handleAddBug} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    onBlur={() => setShowForm(false)}
-                    placeholder="Enter bug title…"
-                    className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
-                  />
-                  <button type="submit" className="text-sm text-green-400">
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="text-sm text-gray-400"
-                  >
-                    Cancel
-                  </button>
                 </form>
               </td>
             </tr>
           )}
         </tbody>
       </table>
-      {allBugs.length === 0 && !isBugsLoading && (
+
+      {!isBugsLoading && allBugs.length === 0 && (
         <div className="text-center py-8 text-gray-400">
           No bugs found. Click "Create Bug" to add one.
         </div>
