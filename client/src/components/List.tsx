@@ -90,17 +90,6 @@ function List() {
               key={bug.id}
               className="group hover:bg-gray-800 transition-colors duration-150"
             >
-              {/* <td className="px-4 py-2 border-b border-r border-gray-700 font-medium text-white">
-                {bug.title}
-              </td>
-
-              <td className="px-4 py-2 border-b border-r border-gray-700 capitalize">
-                {bug.status}
-              </td>
-              <td className="px-4 py-2 border-b border-r border-gray-700">
-                {bug.priority}
-              </td> */}
-
               <EditableCell
                 bug={bug}
                 field="title"
@@ -162,7 +151,7 @@ function List() {
           ) : (
             <tr>
               <td colSpan={6} className="p-3 bg-gray-900">
-                <form onSubmit={handleAddBug}>
+                {/* <form onSubmit={handleAddBug}>
                   <input
                     type="text"
                     value={title}
@@ -172,6 +161,26 @@ function List() {
                     autoFocus
                     className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none"
                   />
+                </form> */}
+                <form onSubmit={handleAddBug} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    onBlur={() => setShowForm(false)}
+                    placeholder="Enter bug title…"
+                    className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600"
+                  />
+                  <button type="submit" className="text-sm text-green-400">
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="text-sm text-gray-400"
+                  >
+                    Cancel
+                  </button>
                 </form>
               </td>
             </tr>
