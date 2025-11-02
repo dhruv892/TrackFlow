@@ -80,6 +80,15 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
       content,
       /* currentUserId */ 1
     );
+
+    if (!newComment.author) {
+      newComment.author = {
+        id: 1,
+        name: "Bob Smith", // or however you identify the current user
+        email: "bob@example.com",
+      };
+    }
+
     setComments((prev) => [...prev, newComment]);
   };
 
@@ -235,7 +244,7 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
                 </label>
               </div>
               <div className="text-white flex-1">
-                {bug.userId || "Unassigned"}
+                {bug.author.name || "Unassigned"}
               </div>
             </div>
 

@@ -11,12 +11,22 @@ export interface Bug {
   createdAt?: string;
   updatedAt?: string;
   userId?: number;
+  author: {
+    id: number;
+    name: string;
+    email: string;
+  };
 }
 
 export interface Comment {
   id: number;
   content: string;
   authorId: number;
+  author: {
+    id: number;
+    name: string;
+    email: string;
+  };
   bugId: number;
   createdAt?: string;
   updatedAt?: string;

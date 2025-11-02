@@ -27,11 +27,11 @@ export default function CommentItem({
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-medium">
           {/* You can display authorId or lookup author name elsewhere */}
-          {comment.authorId.toString().charAt(0)}
+          {comment.author.name.toString().charAt(0)}
         </div>
         <div>
           <div className="text-sm font-medium text-white">
-            Author ID: {comment.authorId}
+            {comment.author.name || "Unknown Author"}
           </div>
           <div className="text-xs text-gray-400">
             {comment.createdAt?.slice(0, 10) ?? "—"}
