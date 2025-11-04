@@ -2,6 +2,14 @@
 export type BugStatus = "todo" | "in_progress" | "in_review" | "done";
 export type Priority = "low" | "medium" | "high" | "top";
 
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Bug {
   id: number;
   title: string;
@@ -16,6 +24,7 @@ export interface Bug {
     name: string;
     email: string;
   };
+  assignedTo?: User[];
 }
 
 export interface Comment {
