@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Board from "./Board";
-import List from "./List";
+import Board from "./board/Board";
+import List from "./list/List";
 
 function ProjectDashboard() {
   const [view, setView] = useState("board"); // "board" or "list"

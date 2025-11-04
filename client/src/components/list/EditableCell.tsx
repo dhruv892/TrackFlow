@@ -1,6 +1,7 @@
 import { useState } from "react";
-import type { Bug } from "../types/types";
+// import type { Bug } from "../types/types";
 import { Ellipsis } from "lucide-react";
+import type { Bug } from "../../types/types";
 
 export default function EditableCell({
   bug,

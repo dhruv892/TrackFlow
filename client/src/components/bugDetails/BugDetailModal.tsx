@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Bug, Comment } from "../types/types";
+import type { Bug, Comment } from "../../types/types";
 import { Calendar, User, X } from "lucide-react";
 import CommentItem from "./CommentItem";
 import AddCommentForm from "./AddCommentForm";
@@ -8,7 +8,7 @@ import {
   deleteComment,
   fetchCommentsForBug,
   updateComment,
-} from "../api/commentsApi";
+} from "../../api/commentsApi";
 
 interface BugDetailModalProps {
   bug: Bug;

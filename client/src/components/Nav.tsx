@@ -1,7 +1,7 @@
 import React from "react";
 
 import logo from "../assets/logo.svg";
-import Search from "./common/Search";
+import Search from "./Search";
 import { Plus, User } from "lucide-react";
 
 export default function Nav() {

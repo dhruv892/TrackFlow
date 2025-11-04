@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import type { Bug } from "../types/types";
+import type { Bug } from "../../types/types";
 import { Loader2, Plus } from "lucide-react";
-import { useBugStore } from "../store/bugs";
-import BugDetailModal from "./BugDetailModal";
+import { useBugStore } from "../../store/bugs";
+import BugDetailModal from "../bugDetails/BugDetailModal";
+import { useUIStore, type GroupByOption } from "../../store/ui";
 import EditableCell from "./EditableCell";
-import { useUIStore, type GroupByOption } from "../store/ui";
 
 function List() {
   const [showForm, setShowForm] = useState(false);
@@ -23,22 +23,6 @@ function List() {
   useEffect(() => {
     getAllBugs();
   }, [getAllBugs]);
-
-  // const groupedBugs = useMemo(() => {
-  //   if (groupBy === "none") return { All: allBugs };
-
-  //   return allBugs.reduce((groups, bug) => {
-  //     let key = "Unassigned";
-  //     if (groupBy === "status") key = bug.status ?? "Unknown";
-  //     else if (groupBy === "priority") key = bug.priority ?? "Unknown";
-  //     else if (groupBy === "assignee")
-  //       key = bug.assignedTo?.[0]?.name || bug.author?.name || "Unassigned";
-
-  //     if (!groups[key]) groups[key] = [];
-  //     groups[key].push(bug);
-  //     return groups;
-  //   }, {} as Record<string, Bug[]>);
-  // }, [allBugs, groupBy]);
 
   const handleAddBug = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,100 +105,6 @@ function List() {
             </th>
           </tr>
         </thead>
-
-        {/* <tbody>
-          {allBugs.map((bug: Bug) => (
-            <tr
-              key={bug.id}
-              className="group hover:bg-gray-800 transition-colors duration-150"
-            >
-              <EditableCell
-                bug={bug}
-                field="title"
-                onSave={handleUpdateBug}
-                onEllipsisClick={() => setSelectedBug(bug)}
-              />
-              <EditableCell
-                bug={bug}
-                field="status"
-                onSave={handleUpdateBug}
-                onEllipsisClick={() => setSelectedBug(bug)}
-              />
-              <EditableCell
-                bug={bug}
-                field="priority"
-                onSave={handleUpdateBug}
-                onEllipsisClick={() => setSelectedBug(bug)}
-              />
-              <td className="px-4 py-2 border-b border-r border-gray-700">
-                {bug.userId ?? "—"}
-              </td>
-              <td className="px-4 py-2 border-b border-r border-gray-700">
-                {bug.createdAt
-                  ? new Date(bug.createdAt).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })
-                  : "—"}
-              </td>
-              <td className="px-4 py-2 border-b border-r border-gray-700">
-                {bug.updatedAt
-                  ? new Date(bug.updatedAt).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })
-                  : "—"}
-              </td>
-              <td className="px-4 py-2 border-b border-gray-700 text-center">
-                <button
-                  onClick={() => handleDelete(bug.id)}
-                  className="text-red-400 hover:text-red-300 transition-colors px-2 py-1 text-xs"
-                  disabled={bug.id < 0}
-                >
-                  {bug.id < 0 ? "..." : "Delete"}
-                </button>
-              </td>
-            </tr>
-          ))}
-
-          {!showForm ? (
-            <tr
-              onClick={() => setShowForm(true)}
-              className="hover:bg-gray-800 cursor-pointer transition duration-150"
-            >
-              <td
-                colSpan={7}
-                className="px-4 py-2 border-b border-gray-700 text-gray-400 hover:text-white"
-              >
-                <div className="flex gap-2 w-full">
-                  <Plus className="w-5 h-5" />
-                  <span>Create Bug</span>
-                </div>
-              </td>
-            </tr>
-          ) : (
-            <tr>
-              <td colSpan={7} className="p-3 bg-gray-900">
-                <form
-                  onSubmit={handleAddBug}
-                  className="flex gap-2 items-center"
-                >
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    onBlur={() => setShowForm(false)}
-                    placeholder="Enter bug title..."
-                    autoFocus
-                    className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none"
-                  />
-                </form>
-              </td>
-            </tr>
-          )}
-        </tbody> */}
         <tbody>
           {Object.entries(groupedBugs).map(([group, bugs]) => (
             <React.Fragment key={group}>

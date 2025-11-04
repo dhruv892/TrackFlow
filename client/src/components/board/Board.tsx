@@ -1,4 +1,3 @@
-import React from "react";
 import StatusCard from "./StatusCard";
 import { Plus } from "lucide-react";
 
