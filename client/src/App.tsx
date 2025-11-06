@@ -5,10 +5,10 @@ import Projectdashboard from "./components/ProjectDashboard";
 
 function App() {
   return (
-    <div className="border-2 rounded-md p-2 border-gray-700">
+    <div className="min-h-screen flex flex-col border-2 rounded-md p-2 border-gray-700">
       <Nav />
 
-      <div className="flex pt-2">
+      <div className="flex flex-1 overflow-hidden">
         <SideBar />
         <Projectdashboard />
       </div>

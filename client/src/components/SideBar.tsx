@@ -2,7 +2,7 @@ import React from "react";
 
 function SideBar() {
   return (
-    <div className="border-r-2 pr-2 border-gray-700">
+    <div className="w-64 border-r-2 pr-2 border-gray-700">
       <p>List of Projects</p>
       <ProjectCard />
       <ProjectCard />

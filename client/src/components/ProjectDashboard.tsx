@@ -6,7 +6,7 @@ function ProjectDashboard() {
   const [view, setView] = useState("board"); // "board" or "list"
 
   return (
-    <div className="pl-2">
+    <div className="pl-2 mt-2 overflow-hidden flex flex-col">
       <header>
         <h1 className="text-2xl font-bold">Project Name</h1>
         {/* <p className="text-sm text-gray-400">Description of the project</p> */}
@@ -31,17 +31,9 @@ function ProjectDashboard() {
         </button>
       </nav>
 
-      <main className="mt-3">
-        {view === "board" && (
-          <div>
-            <Board />
-          </div>
-        )}
-        {view === "list" && (
-          <div>
-            <List />
-          </div>
-        )}
+      <main className="flex-1 overflow-auto scrollbar-hide">
+        {view === "board" && <Board />}
+        {view === "list" && <List />}
       </main>
     </div>
   );
