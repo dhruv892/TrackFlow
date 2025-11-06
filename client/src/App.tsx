@@ -1,6 +1,5 @@
 import "./App.css";
 import Nav from "./components/Nav";
-import SideBar from "./components/SideBar";
 import Projectdashboard from "./components/ProjectDashboard";
 
 function App() {
@@ -9,7 +8,7 @@ function App() {
       <Nav />
 
       <div className="flex flex-1 overflow-hidden">
-        <SideBar />
+        {/* <SideBar /> */}
         <Projectdashboard />
       </div>
     </div>

@@ -6,7 +6,7 @@ function ProjectDashboard() {
   const [view, setView] = useState("board"); // "board" or "list"
 
   return (
-    <div className="pl-2 mt-2 overflow-hidden flex flex-col">
+    <div className="pl-2 mt-2 overflow-hidden w-full flex flex-col">
       <header>
         <h1 className="text-2xl font-bold">Project Name</h1>
         {/* <p className="text-sm text-gray-400">Description of the project</p> */}
