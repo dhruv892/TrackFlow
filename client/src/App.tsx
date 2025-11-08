@@ -1,17 +1,18 @@
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
-import Nav from "./components/Nav";
-import Projectdashboard from "./components/ProjectDashboard";
+import { ROUTES } from "./routesConfig";
+import DashBoard from "./pages/DashBoard";
 
 function App() {
   return (
-    <div className="min-h-screen flex flex-col border-2 rounded-md p-2 border-gray-700">
-      <Nav />
+    <BrowserRouter>
+      <Routes>
+        <Route path={ROUTES.dashboard} element={<DashBoard />} />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* <SideBar /> */}
-        <Projectdashboard />
-      </div>
-    </div>
+        {/* Add a catch-all for 404s */}
+        {/* <Route path="*" element={<NotFound />} /> */}
+      </Routes>
+    </BrowserRouter>
   );
 
   // return <Temp />;
