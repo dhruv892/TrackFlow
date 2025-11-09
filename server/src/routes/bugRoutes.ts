@@ -1,6 +1,18 @@
 import { Router } from "express";
-import { assignUserToBug, createBug, deleteBug, getAllBugs, getBug, removeAllAssignedUsers, removeAssignedUsers, updateBug } from "../controllers/bugController.js";
-import { createComment, getAllComments } from "../controllers/commentController.js";
+import {
+  assignUserToBug,
+  createBug,
+  deleteBug,
+  getAllBugs,
+  getBug,
+  removeAllAssignedUsers,
+  removeAssignedUsers,
+  updateBug,
+} from "../controllers/bugController.js";
+import {
+  createComment,
+  getAllComments,
+} from "../controllers/commentController.js";
 
 const router = Router();
 
@@ -15,7 +27,6 @@ router.get("/:bugId/comments", getAllComments);
 //	authorId: number
 router.post("/:bugId/comments", createComment);
 
-
 // ---------------------------------
 // Assignees
 // POST /api/bugs/:bugId/assignees
@@ -29,7 +40,6 @@ router.delete("/:bugId/assignees/all", removeAllAssignedUsers);
 // Body:
 //	userIds: number[]
 router.delete("/:bugId/assignees", removeAssignedUsers);
-
 
 // ---------------------------------
 // Bugs
@@ -60,4 +70,3 @@ router.put("/:bugId", updateBug);
 router.delete("/:bugId", deleteBug);
 
 export default router;
-
