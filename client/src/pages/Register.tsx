@@ -90,6 +90,16 @@ const Register: React.FC = () => {
         >
           Register
         </button>
+        <p className="text-gray-400 text-center">
+          Already have an account?{" "}
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="text-blue-500 hover:underline"
+          >
+            Login here
+          </button>
+        </p>
       </form>
     </div>
   );
