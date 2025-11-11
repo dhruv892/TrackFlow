@@ -6,13 +6,13 @@ import { AccessDeniedError, CustomError } from "../errors/CustomError.js";
 //   user: string;
 // };
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JwtPayload;
-    }
-  }
-}
+// declare global {
+//   namespace Express {
+//     interface Request {
+//       user?: JwtPayload;
+//     }
+//   }
+// }
 
 export const auth = (req: Request, res: Response, next: NextFunction) => {
   const token = req.cookies.token;

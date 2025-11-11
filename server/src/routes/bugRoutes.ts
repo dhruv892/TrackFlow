@@ -56,7 +56,7 @@ router.get("/:bugId", getBug);
 //	description?: string
 //	status?: BugStatus
 //	priority: PriorityStates
-router.post("/", createBug);
+router.post("/:projectId", createBug);
 
 // PUT /api/bugs/:bugId
 // body:

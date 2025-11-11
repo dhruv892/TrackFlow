@@ -10,6 +10,7 @@ import commentsRouter from "./commentRoutes.js";
 import authRouter from "./authRoutes.js";
 import { CustomError } from "../errors/CustomError.js";
 import { auth } from "../middleware/auth.js";
+import projectsRouter from "./projectRoutes.js";
 
 const router = Router();
 
@@ -21,6 +22,8 @@ router.use("/bugs", bugsRouter);
 router.use("/users", userRouter);
 // router.use("/comments", auth, commentsRouter);
 router.use("/comments", commentsRouter);
+
+router.use("/projects", auth, projectsRouter);
 
 // Error middleware
 router.use(

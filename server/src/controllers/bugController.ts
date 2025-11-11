@@ -83,12 +83,16 @@ type CreateBugBody = {
   description?: string;
   status?: BugStatus;
   priority?: PriorityStates;
+  projectId?: number;
 };
 
 // Only title and userId are mandatory  Others may and may not be received  We have
 // to use default values in case of missing values
+type CreateBugParams = {
+  projectId: string;
+};
 export const createBug = async (
-  req: Request<{}, any, CreateBugBody>,
+  req: Request<CreateBugParams, any, CreateBugBody>,
   res: Response,
   next: NextFunction
 ) => {
@@ -97,6 +101,7 @@ export const createBug = async (
     description = description ?? "";
     status = status ?? BugStatus.todo;
     priority = priority ?? PriorityStates.medium;
+    const projectId = Number(req.params.projectId);
 
     // Validation
     if (!title?.trim()) throw new ValidationError("Title is required.");
@@ -111,6 +116,7 @@ export const createBug = async (
       status: status ?? BugStatus.todo,
       priority: priority ?? PriorityStates.medium,
       author: { connect: { id: userId } },
+      project: { connect: { id: projectId } },
     };
 
     const bug = await prisma.bug.create({
