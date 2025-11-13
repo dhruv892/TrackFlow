@@ -52,7 +52,7 @@ export const createProject = async (
         name,
         description,
         // author: { connect: { id: req.user?.userId! } },
-        author: { connect: { id: req.user?.userId! } },
+        author: { connect: { id: req.user?.userId } },
         users: { connect: { id: req.user?.userId } }, // creator auto-added as user
       },
     });

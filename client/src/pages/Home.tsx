@@ -1,9 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Nav from "../components/Nav";
 import { useAuthStore } from "../store/auth";
 import { useProjectStore } from "../store/project";
 import { useNavigate } from "react-router-dom";
 import { useProjectStoreState } from "../store/ui";
+import { Plus } from "lucide-react";
+import AddProjectModal from "../components/home/AddProjectModal";
+import type { Project } from "../types/types";
 
 const Home: React.FC = () => {
   const user = useAuthStore((state) => state.user);
@@ -18,6 +21,8 @@ const Home: React.FC = () => {
   const setCurrentProjectName = useProjectStoreState(
     (state) => state.setCurrentProjectName
   );
+
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const navigate = useNavigate();
 
@@ -43,6 +48,15 @@ const Home: React.FC = () => {
     navigate("/dashboard");
   };
 
+  const handleCreateProject = (project: Partial<Project>) => {
+    useProjectStore
+      .getState()
+      .createProject(
+        project.name || "Untitled Project",
+        project.description || ""
+      );
+  };
+
   return (
     <div>
       <div className="min-h-screen flex flex-col border-2 rounded-md p-2 border-gray-700">
@@ -58,11 +72,28 @@ const Home: React.FC = () => {
           <h2 className="text-xl font-semibold mb-2">
             Projects Created By You
           </h2>
-          {createdByMe.length === 0 ? (
-            <p>No projects created by you.</p>
-          ) : (
-            <div className="grid grid-cols-1 cursor-pointer  sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {createdByMe.map((project) => (
+
+          <div className="grid grid-cols-1 cursor-pointer  sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div
+              onClick={() => setShowAddModal(true)}
+              className="border-2 border-dashed border-gray-700 rounded-md flex items-center justify-center hover:bg-gray-900 transition"
+            >
+              <Plus className="w-6 h-6 items-center" />
+            </div>
+
+            {showAddModal && (
+              <AddProjectModal
+                onClose={() => setShowAddModal(false)}
+                onAdd={handleCreateProject}
+              />
+            )}
+
+            {createdByMe.length === 0 ? (
+              <p className="col-span-full text-gray-400">
+                No projects created by you.
+              </p>
+            ) : (
+              createdByMe.map((project) => (
                 <div
                   key={project.id}
                   className="border-2 hover:bg-gray-900 rounded-md mb-2 p-2 border-gray-700"
@@ -70,9 +101,9 @@ const Home: React.FC = () => {
                 >
                   <h3 className="text-lg font-semibold">{project.name}</h3>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </section>
 
         <section>

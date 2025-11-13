@@ -8,9 +8,10 @@ type ProjectStoreState = {
   memberOf: Project[];
   isLoading: boolean;
   fetchAllProjects: (userId: number) => Promise<void>;
+  createProject: (name: string, description: string) => Promise<void>;
 };
 
-export const useProjectStore = create<ProjectStoreState>((set) => ({
+export const useProjectStore = create<ProjectStoreState>((set, get) => ({
   allProjects: [],
   createdByMe: [],
   memberOf: [],
@@ -34,6 +35,23 @@ export const useProjectStore = create<ProjectStoreState>((set) => ({
       console.error(e);
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  createProject: async (name: string, description: string) => {
+    try {
+      const response = await axiosInstance.post<Project>("/projects", {
+        name,
+        description,
+      });
+      const newProject = response.data;
+      const { allProjects, createdByMe } = get();
+      set({
+        allProjects: [...allProjects, newProject],
+        createdByMe: [...createdByMe, newProject],
+      });
+    } catch (e) {
+      console.error("Error creating project:", e);
     }
   },
 }));
