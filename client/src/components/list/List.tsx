@@ -140,7 +140,7 @@ function List() {
                     onEllipsisClick={() => setSelectedBug(bug)}
                   />
                   <td className="px-4 py-2 border-b border-r border-gray-700">
-                    {bug.userId ?? "—"}
+                    {bug.author.name ?? "—"}
                   </td>
                   <td className="px-4 py-2 border-b border-r border-gray-700">
                     {bug.createdAt
