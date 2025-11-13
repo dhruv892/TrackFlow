@@ -103,21 +103,21 @@ export const createUser = async (
   }
 };
 
-type updateUserParam = {
-  userId: string;
-};
+// type updateUserParam = {
+//   userId: string;
+// };
 type updateUserPayload = {
   email?: string;
   name?: string;
   password?: string;
 };
 export const updateUser = async (
-  req: Request<updateUserParam, any, updateUserPayload>,
+  req: Request<updateUserPayload>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const userId = Number(req.params.userId);
+    const userId = Number(req.user?.userId);
     if (Number.isNaN(userId) || !Number.isInteger(userId)) {
       throw new ValidationError("UserId is invalid.");
     }

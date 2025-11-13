@@ -1,11 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 
 import logo from "../assets/logo.svg";
 import Search from "./Search";
 import { Plus, User } from "lucide-react";
 import { Link } from "react-router-dom";
+import ProfileModal from "./ProfileModal";
+import { updateUser } from "../api/userApi";
+import { useAuthStore } from "../store/auth";
 
 export default function Nav() {
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const setUser = useAuthStore((state) => state.setUser);
+
+  const handleUpdateProfile = async (
+    user: Partial<{ name: string; email: string }>
+  ) => {
+    await updateUser(user);
+    // read current user from the store and pass a concrete object to setUser
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser) return;
+
+    setUser({
+      ...currentUser,
+      ...user,
+    });
+  };
+
   return (
     <>
       <div className="flex pb-2 pl-2 pr-2 justify-between border-b-2 border-gray-700 content-cente items-center">
@@ -24,11 +45,21 @@ export default function Nav() {
           </button>
         </div>
         <div>
-          <div>
+          <div
+            className="cursor-pointer"
+            onClick={() => setShowProfileModal(true)}
+          >
             <User />
           </div>
         </div>
       </div>
+
+      {showProfileModal && (
+        <ProfileModal
+          onClose={() => setShowProfileModal(false)}
+          onAdd={handleUpdateProfile}
+        />
+      )}
     </>
   );
 }

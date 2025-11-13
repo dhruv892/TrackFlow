@@ -16,14 +16,14 @@ const router = Router();
 router.get("/", getAllUsers);
 
 // GET /api/users/me
-router.get("/me", auth, getUser);
+router.get("/me", getUser);
 
 // PUT /api/users/:userId
 // body:
 //	email?: string,
 //	name?: string,
 //	password?: string
-router.put("/:userId", updateUser);
+router.put("/", updateUser);
 
 // GET /api/users/:userId/delete-info
 router.get("/:userId/delete-info", getUserDeletionInfo);

@@ -19,7 +19,7 @@ router.use("/auth", authRouter);
 router.use("/bugs", auth, bugsRouter);
 // router.use("/users", auth, userRouter);
 
-router.use("/users", userRouter);
+router.use("/users", auth, userRouter);
 // router.use("/comments", auth, commentsRouter);
 router.use("/comments", auth, commentsRouter);
 
