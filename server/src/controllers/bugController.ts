@@ -136,6 +136,11 @@ export const createBug = async (
 
     const bug = await prisma.bug.create({
       data: bugData,
+      include: {
+        author: {
+          select: { id: true, name: true, email: true },
+        },
+      },
     });
     res.status(201).json(bug);
   } catch (error: any) {
