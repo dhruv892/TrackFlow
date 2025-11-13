@@ -7,6 +7,7 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const setUser = useAuthStore((state) => state.setUser);
   const setAuth = useAuthStore((state) => state.setAuthenticated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const navigate = useNavigate();
@@ -15,20 +16,21 @@ const Login: React.FC = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await getCurrentUser(); // backend validates HTTP-only cookie
+        const user = await getCurrentUser();
+        setUser(user);
         setAuth(true);
-        navigate("/dashboard");
+        navigate("/");
       } catch {
         setAuth(false);
       }
     };
     checkAuth();
-  }, [navigate, setAuth]);
+  }, [navigate, setAuth, setUser]);
 
   // Also redirect immediately if Zustand indicates logged in (in case of fast state updates)
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard");
+      navigate("/");
     }
   }, [isAuthenticated, navigate]);
 
@@ -43,8 +45,10 @@ const Login: React.FC = () => {
 
     try {
       await login({ email, password });
+      const user = await getCurrentUser(); // fetch user after login
+      setUser(user);
       setAuth(true);
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       console.error(err);
       setError("Invalid credentials.");

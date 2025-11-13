@@ -44,7 +44,8 @@ router.delete("/:bugId/assignees", removeAssignedUsers);
 // ---------------------------------
 // Bugs
 // GET /api/bugs
-router.get("/", getAllBugs);
+// this is in projectRoutes.ts
+// router.get("/", getAllBugs);
 
 // GET /api/bugs/:bugId
 router.get("/:bugId", getBug);
@@ -56,6 +57,7 @@ router.get("/:bugId", getBug);
 //	description?: string
 //	status?: BugStatus
 //	priority: PriorityStates
+
 router.post("/:projectId", createBug);
 
 // PUT /api/bugs/:bugId

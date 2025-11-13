@@ -8,6 +8,7 @@ import {
   updateProject,
 } from "../controllers/projectController.js";
 import { auth } from "../middleware/auth.js";
+import { getAllBugs } from "../controllers/bugController.js";
 
 const router = Router();
 
@@ -17,6 +18,10 @@ router.get("/", getAllProjects);
 
 //post: /api/projects
 router.post("/", createProject);
+
+// // Bugs
+// // GET /api/projects/:projectId/bugs
+// router.get("/:projectId/bugs", getAllBugs);
 
 //put: /api/projects/:projectId
 router.put("/:projectId", updateProject);
@@ -31,5 +36,8 @@ router.post("/:projectId/users", addUserToProject);
 //delete: :id/users/:userId to remove user from project
 // body: { email: string }
 router.delete("/:projectId/users", removeUserFromProject);
+
+// for getting all bugs and creating bug
+router.get("/:projectId/bugs", getAllBugs);
 
 export default router;

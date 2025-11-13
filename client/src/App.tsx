@@ -5,6 +5,7 @@ import DashBoard from "./pages/DashBoard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Home from "./pages/Home";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
 
         {/* All protected routes */}
         <Route element={<ProtectedRoute />}>
+          <Route path={ROUTES.home} element={<Home />} />
           <Route path="/dashboard" element={<DashBoard />} />
           {/* Add more protected routes here */}
         </Route>

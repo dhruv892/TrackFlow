@@ -5,14 +5,9 @@ export async function fetchCommentsForBug(bugId: number) {
   return res.data; // Array of comments
 }
 
-export async function addCommentForBug(
-  bugId: number,
-  content: string,
-  authorId: number
-) {
+export async function addCommentForBug(bugId: number, content: string) {
   const res = await axiosInstance.post(`/bugs/${bugId}/comments`, {
     content,
-    authorId,
   });
   return res.data; // Newly created comment
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Bug } from "../../types/types";
 import { X } from "lucide-react";
+import { useAuthStore } from "../../store/auth";
 
 interface AddBugModalProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ interface AddBugModalProps {
 function AddBugModal({ onClose, onAdd, initialStatus }: AddBugModalProps) {
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState("medium");
+  const currentUser = useAuthStore((state) => state.user);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +22,14 @@ function AddBugModal({ onClose, onAdd, initialStatus }: AddBugModalProps) {
       title,
       status: initialStatus,
       priority,
-      userId: 1,
+      userId: currentUser ? currentUser.id : undefined,
+      author: currentUser
+        ? {
+            id: currentUser.id,
+            name: currentUser.name || "",
+            email: currentUser.email,
+          }
+        : undefined,
     });
 
     setTitle("");

@@ -17,42 +17,8 @@ interface BugDetailModalProps {
 }
 
 function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
-  // const [comment, setComment] = useState("");
-  // const [comments, setComments] = useState<
-  //   Array<{ id: number; text: string; author: string; date: string }>
-  // >([
-  //   {
-  //     id: 1,
-  //     text: "This needs to be fixed ASAP",
-  //     author: "John Doe",
-  //     date: "2024-01-15",
-  //   },
-  // ]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // const handleAddComment = (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (!comment.trim()) return;
-
-  //   setComments([
-  //     ...comments,
-  //     {
-  //       id: Date.now(),
-  //       text: comment,
-  //       author: "Current User",
-  //       date: new Date().toISOString().split("T")[0],
-  //     },
-  //   ]);
-  //   setComment("");
-  // };
-
-  // useEffect(() => {
-  //   setLoading(true);
-  //   fetchComments(bug.id).then(() => {
-  //     setLoading(false);
-  //   });
-  // }, [bug.id]);
 
   useEffect(() => {
     let isMounted = true; // to avoid setting state on unmounted component
@@ -69,6 +35,19 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
     };
   }, [bug.id]);
 
+  // Detect temp bug by negative ID
+  const isTempBug = bug.id < 0;
+
+  if (isTempBug) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-900 border-gray-700 rounded-lg p-6 max-w-md w-full text-white text-center font-semibold">
+          Loading bug details...
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return <div>Loading comments...</div>;
   }
@@ -77,17 +56,8 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
     const newComment = await addCommentForBug(
       // if (!bug) return;
       bug.id,
-      content,
-      /* currentUserId */ 1
+      content
     );
-
-    if (!newComment.author) {
-      newComment.author = {
-        id: 1,
-        name: "Bob Smith", // or however you identify the current user
-        email: "bob@example.com",
-      };
-    }
 
     setComments((prev) => [...prev, newComment]);
   };
@@ -104,8 +74,6 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
     await deleteComment(id);
     setComments((prev) => prev.filter((c) => c.id !== id));
   };
-
-  // if (loading) return <div>Loading comments...</div>;
 
   return (
     <div
@@ -244,7 +212,7 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
                 </label>
               </div>
               <div className="text-white flex-1">
-                {bug.author.name || "Unassigned"}
+                {bug.author?.name || "Unassigned"}
               </div>
             </div>
 

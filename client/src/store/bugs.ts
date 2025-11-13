@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { axiosInstance } from "../api/api";
 import type { Bug } from "../types/types";
+import { useProjectStoreState } from "./ui";
 
 type BugStoreState = {
   isBugsLoading: boolean;
@@ -15,9 +16,13 @@ export const useBugStore = create<BugStoreState>((set, get) => ({
   allBugs: [],
   isBugsLoading: false,
   getAllBugs: async () => {
+    const projectId = useProjectStoreState.getState().currentProjectId;
+    if (!projectId) throw new Error("No project selected");
     set({ isBugsLoading: true });
     try {
-      const response = await axiosInstance.get<Bug[]>("/bugs");
+      const response = await axiosInstance.get<Bug[]>(
+        `/projects/${projectId}/bugs`
+      );
       set({ allBugs: response.data });
     } catch (error) {
       console.error("Failed to fetch bugs:", error);
@@ -30,9 +35,11 @@ export const useBugStore = create<BugStoreState>((set, get) => ({
     const tempBug = { ...bug, id: -Date.now() } as Bug;
     // Add temp bug immediately
     set((state) => ({ allBugs: [tempBug, ...state.allBugs] }));
+    const projectId = useProjectStoreState.getState().currentProjectId;
+    if (!projectId) throw new Error("No project selected");
 
     try {
-      const response = await axiosInstance.post<Bug>("/bugs", bug);
+      const response = await axiosInstance.post<Bug>(`/bugs/${projectId}`, bug);
 
       // Replace the temp bug (negative ID) with real bug
       set((state) => ({

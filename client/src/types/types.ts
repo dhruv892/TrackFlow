@@ -11,6 +11,16 @@ export interface User {
   updatedAt?: string;
 }
 
+export interface Project {
+  id: number;
+  name: string;
+  authorId: number;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  users: User[];
+}
+
 export interface Bug {
   id: number;
   title: string;

@@ -72,7 +72,20 @@ export const createComment = async (
 ) => {
   try {
     const bugId = Number(req.params.bugId);
-    const { content, authorId } = req.body;
+    if (Number.isNaN(bugId) || !Number.isInteger(bugId)) {
+      throw new ValidationError("BugId is invalid");
+    }
+    const { content } = req.body;
+    // console.log("req.user:", req.user);
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new ValidationError("Invalid authorId.");
+    }
+    // console.log("userId:", userId);
+
+    if (!userId || Number.isNaN(userId) || !Number.isInteger(userId)) {
+      throw new ValidationError("Invalid authorId.");
+    }
 
     // Validation
     if (Number.isNaN(bugId) || !Number.isInteger(bugId)) {
@@ -91,18 +104,24 @@ export const createComment = async (
     if (!bug) throw new NotFoundError(`Bug with id ${bugId} does not exist`);
 
     const user = await prisma.user.findUnique({
-      where: { id: authorId },
+      where: { id: userId },
     });
-    if (!user)
-      throw new NotFoundError(`User with id ${authorId} does not exist`);
+    if (!user) throw new NotFoundError(`User with id ${userId} does not exist`);
 
     const commentData = {
       content: content,
-      author: { connect: { id: authorId } },
+      author: { connect: { id: userId } },
       bug: { connect: { id: bugId } },
     };
 
-    const comment = await prisma.comment.create({ data: commentData });
+    const comment = await prisma.comment.create({
+      data: commentData,
+      include: {
+        author: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
     res.status(201).json(comment);
   } catch (error) {
     console.error(error);

@@ -21,13 +21,24 @@ const checkIfUserExists = async (id: number | string) => {
   return user;
 };
 
+type GetAllBugsParams = {
+  projectId: string;
+};
 export const getAllBugs = async (
-  _req: Request,
+  _req: Request<GetAllBugsParams>,
   res: Response,
   next: NextFunction
 ) => {
   try {
+    const projectId = Number(_req.params.projectId);
+    if (Number.isNaN(projectId) || !Number.isInteger(projectId)) {
+      throw new ValidationError("Project ID must be a valid number.");
+    }
+
     const bugs = await prisma.bug.findMany({
+      where: {
+        projectId: projectId,
+      },
       include: {
         author: {
           select: { name: true },
@@ -52,15 +63,14 @@ export const getBug = async (
 ) => {
   try {
     const id = parseInt(req.params.bugId);
-
     if (Number.isNaN(id) || !Number.isInteger(id))
       throw new ValidationError("Invalid bugId");
 
     const bug = await prisma.bug.findUnique({
-      where: { id },
+      where: { id: id },
       include: {
         author: {
-          select: { name: true },
+          select: { name: true, email: true },
         },
         comments: true,
         assignedTo: true,
@@ -97,16 +107,21 @@ export const createBug = async (
   next: NextFunction
 ) => {
   try {
-    let { title, description, status, priority, userId } = req.body;
+    let { title, description, status, priority } = req.body;
+    const userId = req.user?.userId!;
+    console.log(userId, "userId from token");
     description = description ?? "";
     status = status ?? BugStatus.todo;
     priority = priority ?? PriorityStates.medium;
     const projectId = Number(req.params.projectId);
+    if (Number.isNaN(projectId) || !Number.isInteger(projectId)) {
+      throw new ValidationError("Project ID must be a valid number.");
+    }
 
     // Validation
     if (!title?.trim()) throw new ValidationError("Title is required.");
 
-    const user = checkIfUserExists(userId);
+    const user = await checkIfUserExists(userId);
     if (!user)
       throw new ValidationError(`User with id ${userId} does not exist.`);
 

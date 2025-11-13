@@ -3,6 +3,18 @@ import { create } from "zustand";
 import type { Bug } from "../types/types";
 import { useBugStore } from "./bugs";
 
+// storing projectId for current project
+type ProjectStoreState = {
+  currentProjectId: number | null;
+  setCurrentProjectId: (id: number) => void;
+};
+
+export const useProjectStoreState = create<ProjectStoreState>((set) => ({
+  currentProjectId: null,
+  setCurrentProjectId: (id) => set({ currentProjectId: id }),
+}));
+
+// for grouping bugs in UI
 export type GroupByOption = "none" | "status" | "priority" | "assignee";
 
 type UIState = {
