@@ -9,11 +9,14 @@ const Home: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  const { allProjects, createdByMe, memberOf, isLoading, fetchAllProjects } =
+  const { createdByMe, memberOf, isLoading, fetchAllProjects } =
     useProjectStore();
 
   const setCurrentProjectId = useProjectStoreState(
     (state) => state.setCurrentProjectId
+  );
+  const setCurrentProjectName = useProjectStoreState(
+    (state) => state.setCurrentProjectName
   );
 
   const navigate = useNavigate();
@@ -34,8 +37,9 @@ const Home: React.FC = () => {
     return <div>Loading your projects...</div>;
   }
 
-  const handleProjectOnClick = (id: number) => {
+  const handleProjectOnClick = (id: number, name: string) => {
     setCurrentProjectId(id);
+    setCurrentProjectName?.(name);
     navigate("/dashboard");
   };
 
@@ -62,7 +66,7 @@ const Home: React.FC = () => {
                 <div
                   key={project.id}
                   className="border-2 hover:bg-gray-900 rounded-md mb-2 p-2 border-gray-700"
-                  onClick={() => handleProjectOnClick(project.id)}
+                  onClick={() => handleProjectOnClick(project.id, project.name)}
                 >
                   <h3 className="text-lg font-semibold">{project.name}</h3>
                 </div>
@@ -82,7 +86,7 @@ const Home: React.FC = () => {
               {memberOf.map((project) => (
                 <div
                   className="border-2 hover:bg-gray-900 rounded-md mb-2 p-2 border-gray-700"
-                  onClick={handleProjectOnClick}
+                  onClick={() => handleProjectOnClick(project.id, project.name)}
                 >
                   <h3 className="text-lg font-semibold">{project.name}</h3>
                 </div>

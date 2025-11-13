@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import Board from "./board/Board";
 import List from "./list/List";
+import { useProjectStoreState } from "../store/ui";
 
 function ProjectDashboard() {
   const [view, setView] = useState("board"); // "board" or "list"
 
+  const projectName = useProjectStoreState((state) => state.currentProjectName);
+
   return (
     <div className="pl-2 mt-2 overflow-hidden w-full flex flex-col">
       <header>
-        <h1 className="text-2xl font-bold">Project Name</h1>
+        <h1 className="text-2xl font-bold">
+          {projectName || "Project Dashboard"}
+        </h1>
         {/* <p className="text-sm text-gray-400">Description of the project</p> */}
       </header>
 

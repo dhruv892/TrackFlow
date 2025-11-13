@@ -6,12 +6,16 @@ import { useBugStore } from "./bugs";
 // storing projectId for current project
 type ProjectStoreState = {
   currentProjectId: number | null;
+  currentProjectName?: string;
   setCurrentProjectId: (id: number) => void;
+  setCurrentProjectName?: (name: string) => void;
 };
 
 export const useProjectStoreState = create<ProjectStoreState>((set) => ({
   currentProjectId: null,
+  currentProjectName: undefined,
   setCurrentProjectId: (id) => set({ currentProjectId: id }),
+  setCurrentProjectName: (name) => set({ currentProjectName: name }),
 }));
 
 // for grouping bugs in UI
