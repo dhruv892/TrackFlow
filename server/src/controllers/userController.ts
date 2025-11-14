@@ -235,14 +235,7 @@ export const getAllUsers = async (
 ) => {
   try {
     const users = await prisma.user.findMany({
-      include: {
-        comments: true,
-        bugs: true,
-        assignedBugs: true,
-      },
-      omit: {
-        password: true,
-      },
+      select: { id: true, email: true, name: true },
     });
     res.json(users);
   } catch (error) {
