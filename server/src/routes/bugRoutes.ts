@@ -13,8 +13,11 @@ import {
   createComment,
   getAllComments,
 } from "../controllers/commentController.js";
+import { auth } from "../middleware/auth.js";
 
 const router = Router();
+
+router.use(auth);
 
 // ---------------------------------
 // Comments

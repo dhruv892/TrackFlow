@@ -2,23 +2,18 @@ import { BugStatus, PriorityStates } from "../../generated/prisma/index.js";
 import type { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import {
+  AccessDeniedError,
   CustomError,
   InternalServerError,
   NotFoundError,
   ValidationError,
 } from "../errors/CustomError.js";
 
-const checkIfUserExists = async (id: number | string) => {
-  const userId = Number(id);
-  if (!Number.isInteger(userId) || Number.isNaN(userId)) {
-    throw new ValidationError("UserId must be valid.");
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+const isProjectMember = async (projectId: number, userId: number) => {
+  const membership = await prisma.projectMembership.findUnique({
+    where: { projectId_userId: { projectId, userId } },
   });
-
-  return user;
+  return membership;
 };
 
 type GetAllBugsParams = {
@@ -35,15 +30,31 @@ export const getAllBugs = async (
       throw new ValidationError("Project ID must be a valid number.");
     }
 
+    // check if project exists
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project)
+      throw new NotFoundError(`Project with id ${projectId} does not exist.`);
+
+    if (!_req.user)
+      return res.status(401).json({ message: "Not authenticated" });
+
+    // check if user is member of the project
+    const membership = await isProjectMember(projectId, _req.user.userId);
+
+    if (!membership) {
+      throw new AccessDeniedError(
+        "User is not a member of this project. Access denied."
+      );
+    }
+
     const bugs = await prisma.bug.findMany({
       where: {
         projectId: projectId,
       },
       include: {
-        author: {
-          select: { name: true },
-        },
-        // comments: true,
+        author: true,
         assignedTo: true,
       },
       orderBy: { createdAt: "desc" },
@@ -66,6 +77,9 @@ export const getBug = async (
     if (Number.isNaN(id) || !Number.isInteger(id))
       throw new ValidationError("Invalid bugId");
 
+    if (!req.user)
+      return res.status(401).json({ message: "Not authenticated" });
+
     const bug = await prisma.bug.findUnique({
       where: { id: id },
       include: {
@@ -74,10 +88,14 @@ export const getBug = async (
         },
         comments: true,
         assignedTo: true,
+        project: true,
       },
     });
-
     if (!bug) throw new NotFoundError(`Bug with id ${id} not found.`);
+
+    const membership = await isProjectMember(bug.projectId, req.user.id);
+    if (!membership)
+      return res.status(403).json({ error: "Not a project member" });
 
     res.status(200).json(bug);
   } catch (error) {
@@ -108,8 +126,11 @@ export const createBug = async (
 ) => {
   try {
     let { title, description, status, priority } = req.body;
-    const userId = req.user?.userId!;
-    console.log(userId, "userId from token");
+
+    if (!req.user)
+      return res.status(401).json({ message: "Not authenticated" });
+    const userId = req.user.userId;
+
     description = description ?? "";
     status = status ?? BugStatus.todo;
     priority = priority ?? PriorityStates.medium;
@@ -121,9 +142,12 @@ export const createBug = async (
     // Validation
     if (!title?.trim()) throw new ValidationError("Title is required.");
 
-    const user = await checkIfUserExists(userId);
-    if (!user)
-      throw new ValidationError(`User with id ${userId} does not exist.`);
+    const membership = await isProjectMember(projectId, userId);
+    if (!membership) {
+      throw new AccessDeniedError(
+        "User is not a member of this project. Access denied."
+      );
+    }
 
     const bugData = {
       title: title.trim(),
@@ -140,6 +164,7 @@ export const createBug = async (
         author: {
           select: { id: true, name: true, email: true },
         },
+        assignedTo: true,
       },
     });
     res.status(201).json(bug);
@@ -148,11 +173,7 @@ export const createBug = async (
 
     if (error instanceof CustomError) return next(error);
     else {
-      if (error.code === "P2025") {
-        return next(new NotFoundError("User not found"));
-      } else {
-        return next(new InternalServerError("Failed to create bug"));
-      }
+      return next(new InternalServerError("Failed to create bug"));
     }
   }
 };
@@ -181,6 +202,7 @@ export const updateBug = async (
 
     const bug = await prisma.bug.findUnique({
       where: { id: bugId },
+      include: { project: true, assignedTo: true },
     });
 
     if (!bug) throw new NotFoundError(`Bug with id ${bugId} does not exist.`);
@@ -188,6 +210,27 @@ export const updateBug = async (
     // Step 2: Update its fields
     const { title, description, status, priority } = req.body;
     const newData: UpdateBugPayload = {};
+
+    if (!req.user)
+      return res.status(401).json({ message: "Not authenticated" });
+
+    const membership = await isProjectMember(bug.projectId, req.user.id);
+    if (!membership)
+      return res.status(403).json({ error: "Not a project member" });
+
+    //is user assigned to the bug or project admin?
+    const isAssigned = bug.assignedTo.some(
+      (user) => user.id === req.user?.userId
+    );
+    if (
+      !isAssigned &&
+      membership.role !== "ADMIN" &&
+      bug.userId !== req.user.userId
+    ) {
+      throw new AccessDeniedError(
+        "Only assigned users, owners or project admins can update the bug."
+      );
+    }
 
     // Validation
     if (
@@ -225,6 +268,7 @@ export const updateBug = async (
         id: bugId,
       },
       data: newData,
+      include: { author: true, assignedTo: true },
     });
 
     res.status(200).json(updatedBug);
@@ -232,10 +276,8 @@ export const updateBug = async (
     console.error("Update bug error:", error);
     if (error instanceof CustomError) return next(error);
     else {
-      if (error.code === "P2025")
-        return next(new NotFoundError("Bug not found during update"));
-
-      return next(new InternalServerError("Failed to update bug"));
+      console.error(error);
+      res.status(500).json({ error: "Internal server error" });
     }
   }
 };
@@ -248,16 +290,33 @@ export const deleteBug = async (
   try {
     const bugId = Number(req.params.bugId);
 
+    if (!req.user)
+      return res.status(401).json({ message: "Not authenticated" });
+
     // Validation
     if (!Number.isInteger(bugId)) throw new ValidationError("Invaid bugId");
 
     // Check if bug exists
     const existingBug = await prisma.bug.findUnique({
       where: { id: bugId },
+      include: { project: true },
     });
-
     if (!existingBug)
       throw new NotFoundError(`Bug with id ${bugId} not found.`);
+
+    const membership = await isProjectMember(
+      existingBug.projectId,
+      req.user.userId
+    );
+    if (!membership)
+      return res.status(403).json({ error: "Not a project member" });
+
+    // only project owners or admins can delete bug
+    if (membership.role !== "ADMIN" && existingBug.userId !== req.user.userId) {
+      throw new AccessDeniedError(
+        "Only project admins or bug owners can delete the bug."
+      );
+    }
 
     const deletedBug = await prisma.bug.delete({
       where: {
@@ -269,19 +328,9 @@ export const deleteBug = async (
       data: deletedBug,
       msg: `Bug with id ${bugId} deleted successfully.`,
     });
-  } catch (error: any) {
-    console.error("Error deleting the bug:", error);
-
-    if (error instanceof CustomError) return next(error);
-    else {
-      if (error.code === "P2025") {
-        return next(
-          new NotFoundError(`Bug with id ${req.params.bugId} not found.`)
-        );
-      }
-
-      return next(new InternalServerError("Failed to delete bug"));
-    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -303,38 +352,56 @@ export const assignUserToBug = async (
     if (Number.isNaN(bugId) || !Number.isInteger(bugId))
       throw new ValidationError("Invalid bugId");
 
+    if (!req.user)
+      return res.status(401).json({ message: "Not authenticated" });
+
     const bug = await prisma.bug.findUnique({
       where: { id: bugId },
-    });
-
-    if (!bug) throw new NotFoundError(`Bug with id ${bugId} not found.`);
-
-    const userIds = req.body.userIds;
-    const users = await prisma.user.findMany({
-      where: {
-        id: { in: userIds },
+      include: {
+        assignedTo: true,
       },
     });
+    if (!bug) throw new NotFoundError(`Bug with id ${bugId} not found.`);
 
-    if (users.length !== userIds.length) {
-      throw new ValidationError("One or more user IDs are invalid");
+    const membership = await isProjectMember(bug.projectId, req.user.id);
+    if (!membership)
+      return res.status(403).json({ error: "Not a project member" });
+
+    const userIds = req.body.userIds;
+    // Check all assigned users are members of the project
+    const members = await prisma.projectMembership.findMany({
+      where: { projectId: bug.projectId, userId: { in: userIds } },
+    });
+    if (members.length !== userIds.length) {
+      return res
+        .status(400)
+        .json({ error: "All assigned users must be project members" });
+    }
+
+    // check if users are already assigned
+    const alreadyAssignedUserIds = bug.assignedTo?.map((user) => user.id) || [];
+    const newUserIds = userIds.filter(
+      (id: number) => !alreadyAssignedUserIds.includes(id)
+    );
+    if (newUserIds.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "All users are already assigned to the bug" });
     }
 
     const updatedBug = await prisma.bug.update({
       where: { id: bugId },
       data: {
-        assignedTo: {
-          connect: userIds.map((id) => ({ id: id })),
-        },
+        assignedTo: { set: newUserIds.map((id: number) => ({ id })) },
       },
       include: {
         assignedTo: true,
       },
     });
-
-    res.status(200).json(updatedBug);
+    res.status(200).json({ message: "Bug assigned", bug: updatedBug });
   } catch (error) {
-    next(error);
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -351,6 +418,37 @@ export const removeAllAssignedUsers = async (
 
     if (Number.isNaN(bugId) || !Number.isInteger(bugId))
       throw new ValidationError("Invalid bugId received.");
+
+    if (!req.user)
+      return res.status(401).json({ message: "Not authenticated" });
+
+    const bug = await prisma.bug.findUnique({
+      where: { id: bugId },
+      include: {
+        assignedTo: true,
+        project: true,
+      },
+    });
+
+    if (!bug) throw new NotFoundError(`Bug with id ${bugId} not found.`);
+
+    const membership = await isProjectMember(bug.projectId, req.user.id);
+    if (!membership)
+      return res.status(403).json({ error: "Not a project member" });
+
+    // check if there are assigned users
+    if (bug.assignedTo.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "No users are assigned to this bug." });
+    }
+
+    // only project admin or owner can remove all assigned users
+    if (membership.role !== "ADMIN" && bug.userId !== req.user.userId) {
+      throw new AccessDeniedError(
+        "Only project admins or bug owners can remove all assigned users."
+      );
+    }
 
     const updatedBug = await prisma.bug.update({
       where: { id: bugId },
@@ -387,14 +485,29 @@ export const removeAssignedUsers = async (
     if (userIds === undefined || userIds.length === 0)
       throw new ValidationError("UserIds are required.");
 
+    if (!req.user)
+      return res.status(401).json({ message: "Not authenticated" });
+
     const bug = await prisma.bug.findUnique({
       where: { id: bugId },
       include: {
         assignedTo: true,
+        project: true,
       },
     });
 
     if (!bug) throw new NotFoundError(`Bug with id ${bugId} not found.`);
+
+    const membership = await isProjectMember(bug.projectId, req.user.id);
+    if (!membership)
+      return res.status(403).json({ error: "Not a project member" });
+
+    // only project admin or owner can remove assigned users
+    if (membership.role !== "ADMIN" && bug.userId !== req.user.userId) {
+      throw new AccessDeniedError(
+        "Only project admins or bug owners can remove assigned users."
+      );
+    }
 
     const newUsers = bug.assignedTo.filter(
       (user) => !userIds.includes(user.id)

@@ -22,56 +22,96 @@ enum PriorityStates {
   top
 }
 
+enum ProjectRole {
+  ADMIN
+  MEMBER
+}
 
+/* -------------------- PROJECT MEMBERSHIP -------------------- */
+model ProjectMembership {
+  id        Int       @id @default(autoincrement())
+
+  project   Project   @relation(fields: [projectId], references: [id])
+  projectId Int
+
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+
+  role      ProjectRole @default(MEMBER)
+  joinedAt  DateTime     @default(now())
+
+  @@unique([projectId, userId])
+}
+
+/* -------------------- PROJECT MODEL -------------------- */
 model Project {
   id          Int      @id @default(autoincrement())
   name        String   @db.VarChar(255)
   description String?
+
   authorId   Int
   author      User     @relation("AuthoredProjects",fields: [authorId], references: [id])
+
+  bugs        Bug[]
+  memberships ProjectMembership[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  bugs        Bug[]
-  users       User[]   @relation("ProjectUsers")
 }
 
+/* -------------------- BUG MODEL -------------------- */
 model Bug {
   id            Int      @id @default(autoincrement())
   title         String   @db.VarChar(255)
   description   String?
+
   status        BugStatus
   priority      PriorityStates
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
   author        User     @relation("AuthoredBugs", fields: [userId], references: [id])
   userId        Int
+
   projectId     Int
   project       Project  @relation(fields: [projectId], references: [id])
+
 	comments			Comment[]
 	assignedTo		User[]	@relation("AssignedBugs")
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
+/* -------------------- USER MODEL -------------------- */
 model User {
   id						Int				@id @default(autoincrement())
   email					String		@unique
   name					String?
 	password			String
+
   authoredProjects	Project[]	@relation("AuthoredProjects")
-  projects			Project[]	@relation("ProjectUsers")
+
+  memberships     ProjectMembership[]
   bugs					Bug[]			@relation("AuthoredBugs")
 	comments			Comment[]
 	assignedBugs	Bug[]			@relation("AssignedBugs")
+
   createdAt     DateTime	@default(now())
   updatedAt     DateTime	@updatedAt
 }
 
+/* -------------------- COMMENT MODEL -------------------- */
 model Comment {
 	id				Int			 @id @default(autoincrement())
 	content		String
+
 	author    User     @relation(fields: [authorId], references: [id])
 	authorId	Int
+
 	bug       Bug      @relation(fields: [bugId], references: [id])
   bugId     Int
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+
