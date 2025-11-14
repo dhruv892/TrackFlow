@@ -1,29 +1,27 @@
-import React, { useState } from "react";
-// import { useAuthStore } from "../../store/auth";
-import type { Project } from "../../types/types";
 import { X } from "lucide-react";
+import React, { useState } from "react";
 
-interface AddProjectModalProps {
+interface AddUserToProjectModalProps {
   onClose: () => void;
-  onAdd: (project: Partial<Project>) => void;
+  onAdd: (email: string) => Promise<boolean>;
 }
 
-function AddProjectModal({ onClose, onAdd }: AddProjectModalProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  // const currentUser = useAuthStore((state) => state.user);
-
-  const handleSubmit = (e: React.FormEvent) => {
+function AddUserToProjectModal({ onClose, onAdd }: AddUserToProjectModalProps) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!email.trim()) return;
 
-    onAdd({
-      name: title,
-      description,
-    });
+    const success = await onAdd(email);
 
-    setTitle("");
-    setDescription("");
+    if (!success) {
+      setError("Something went wrong. Try again or use a different email.");
+      return; // do NOT close modal
+    }
+
+    setEmail("");
+    setError("");
     onClose();
   };
 
@@ -38,7 +36,7 @@ function AddProjectModal({ onClose, onAdd }: AddProjectModalProps) {
       >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-white">
-            Create New Project
+            Add User to Project
           </h2>
           <button
             onClick={onClose}
@@ -50,32 +48,20 @@ function AddProjectModal({ onClose, onAdd }: AddProjectModalProps) {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Title
-            </label>
+            {/* <label className="block text-sm font-medium text-gray-400 mb-2">
+              email
+            </label> */}
             <input
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter project name..."
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter user email..."
               autoFocus
               className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Description
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter project description..."
-              className="w-full p-2 rounded bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <div className="flex gap-2 justify-end pt-2">
             <button
               onClick={onClose}
@@ -87,7 +73,7 @@ function AddProjectModal({ onClose, onAdd }: AddProjectModalProps) {
               onClick={handleSubmit}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
             >
-              Create Project
+              Add User
             </button>
           </div>
         </div>
@@ -96,4 +82,4 @@ function AddProjectModal({ onClose, onAdd }: AddProjectModalProps) {
   );
 }
 
-export default AddProjectModal;
+export default AddUserToProjectModal;

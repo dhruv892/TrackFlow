@@ -36,7 +36,7 @@ export default function Nav() {
           </Link>
         </div>
         <div className="w-full flex items-center justify-center gap-2 ">
-          <div className="w-2/3 ">
+          <div className="w-2/3">
             <Search />
           </div>
 
@@ -49,7 +49,7 @@ export default function Nav() {
             className="cursor-pointer"
             onClick={() => setShowProfileModal(true)}
           >
-            <User />
+            <User className="hover:text-white text-gray-500" />
           </div>
         </div>
       </div>

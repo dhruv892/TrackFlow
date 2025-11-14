@@ -12,6 +12,8 @@ import { auth } from "../middleware/auth.js";
 
 const router = Router();
 
+router.use(auth);
+
 // GET /api/users
 router.get("/", getAllUsers);
 

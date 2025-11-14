@@ -88,8 +88,10 @@ export const createUser = async (
         name: name.trim(),
         password: hashedPassword,
       },
-      omit: {
-        password: true,
+      select: {
+        id: true,
+        email: true,
+        name: true,
       },
     });
 
@@ -154,9 +156,7 @@ export const updateUser = async (
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
-      omit: {
-        password: true,
-      },
+      select: { id: true, email: true, name: true },
     });
 
     res.json(updatedUser);

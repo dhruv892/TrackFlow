@@ -11,19 +11,22 @@ import authRouter from "./authRoutes.js";
 import { CustomError } from "../errors/CustomError.js";
 import { auth } from "../middleware/auth.js";
 import projectsRouter from "./projectRoutes.js";
+import projectsMembershipsRouter from "./projectMembershipRoutes.js";
 
 const router = Router();
 
 router.use("/auth", authRouter);
 // router.use("/bugs", auth, bugsRouter);
-router.use("/bugs", auth, bugsRouter);
+router.use("/bugs", bugsRouter);
 // router.use("/users", auth, userRouter);
 
-router.use("/users", auth, userRouter);
+router.use("/users", userRouter);
 // router.use("/comments", auth, commentsRouter);
-router.use("/comments", auth, commentsRouter);
+router.use("/comments", commentsRouter);
 
-router.use("/projects", auth, projectsRouter);
+router.use("/projects", projectsRouter);
+
+router.use("/project-membership", projectsMembershipsRouter);
 
 // Error middleware
 router.use(

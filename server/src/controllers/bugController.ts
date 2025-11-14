@@ -213,20 +213,15 @@ export const updateBug = async (
 
     if (!req.user)
       return res.status(401).json({ message: "Not authenticated" });
+    const userId = req.user.userId;
 
-    const membership = await isProjectMember(bug.projectId, req.user.id);
+    const membership = await isProjectMember(bug.projectId, userId);
     if (!membership)
       return res.status(403).json({ error: "Not a project member" });
 
     //is user assigned to the bug or project admin?
-    const isAssigned = bug.assignedTo.some(
-      (user) => user.id === req.user?.userId
-    );
-    if (
-      !isAssigned &&
-      membership.role !== "ADMIN" &&
-      bug.userId !== req.user.userId
-    ) {
+    const isAssigned = bug.assignedTo.some((user) => user.id === userId);
+    if (!isAssigned && membership.role !== "ADMIN" && bug.userId !== userId) {
       throw new AccessDeniedError(
         "Only assigned users, owners or project admins can update the bug."
       );
