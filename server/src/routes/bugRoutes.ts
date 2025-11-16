@@ -7,6 +7,7 @@ import {
   getBug,
   removeAllAssignedUsers,
   removeAssignedUsers,
+  searchUsersForBugs,
   updateBug,
 } from "../controllers/bugController.js";
 import {
@@ -42,7 +43,9 @@ router.delete("/:bugId/assignees/all", removeAllAssignedUsers);
 // DELETE /api/bugs/:bugId/assignees
 // Body:
 //	userIds: number[]
-router.delete("/:bugId/assignees", removeAssignedUsers);
+router.post("/:bugId/remove-assignees", removeAssignedUsers);
+
+router.get("/:bugId/users", searchUsersForBugs);
 
 // ---------------------------------
 // Bugs

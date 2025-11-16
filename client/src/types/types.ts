@@ -18,7 +18,11 @@ export interface Project {
   description?: string;
   createdAt?: string;
   updatedAt?: string;
-  users: User[];
+  memberships: {
+    userId: number;
+    role: "ADMIN" | "MEMBER";
+    user: User;
+  }[];
 }
 
 export interface Bug {

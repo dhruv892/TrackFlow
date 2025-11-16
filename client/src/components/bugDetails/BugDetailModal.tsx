@@ -147,23 +147,6 @@ function BugDetailModal({ bug, onClose, onUpdate }: BugDetailModalProps) {
                 <AddCommentForm onAdd={handleAddComment} />
                 <button onClick={onClose}>Close</button>
               </div>
-
-              {/* Add Comment Form
-              <form onSubmit={handleAddComment} className="space-y-2">
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  rows={3}
-                  className="w-full bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  Add Comment
-                </button>
-              </form> */}
             </div>
           </div>
 

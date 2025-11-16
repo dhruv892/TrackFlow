@@ -358,7 +358,7 @@ export const assignUserToBug = async (
     });
     if (!bug) throw new NotFoundError(`Bug with id ${bugId} not found.`);
 
-    const membership = await isProjectMember(bug.projectId, req.user.id);
+    const membership = await isProjectMember(bug.projectId, req.user.userId);
     if (!membership)
       return res.status(403).json({ error: "Not a project member" });
 
@@ -387,7 +387,7 @@ export const assignUserToBug = async (
     const updatedBug = await prisma.bug.update({
       where: { id: bugId },
       data: {
-        assignedTo: { set: newUserIds.map((id: number) => ({ id })) },
+        assignedTo: { connect: newUserIds.map((id: number) => ({ id })) },
       },
       include: {
         assignedTo: true,
@@ -427,7 +427,7 @@ export const removeAllAssignedUsers = async (
 
     if (!bug) throw new NotFoundError(`Bug with id ${bugId} not found.`);
 
-    const membership = await isProjectMember(bug.projectId, req.user.id);
+    const membership = await isProjectMember(bug.projectId, req.user.userId);
     if (!membership)
       return res.status(403).json({ error: "Not a project member" });
 
@@ -493,7 +493,7 @@ export const removeAssignedUsers = async (
 
     if (!bug) throw new NotFoundError(`Bug with id ${bugId} not found.`);
 
-    const membership = await isProjectMember(bug.projectId, req.user.id);
+    const membership = await isProjectMember(bug.projectId, req.user.userId);
     if (!membership)
       return res.status(403).json({ error: "Not a project member" });
 
@@ -504,23 +504,90 @@ export const removeAssignedUsers = async (
       );
     }
 
-    const newUsers = bug.assignedTo.filter(
-      (user) => !userIds.includes(user.id)
-    );
+    // check if all userIds are in Anssigned to
+    const assignedUserIds = bug.assignedTo.map((user) => user.id);
+    const allExist = userIds.every((id) => assignedUserIds.includes(id));
+    if (!allExist) {
+      throw new ValidationError(
+        "One or more userIds are not assigned to this bug."
+      );
+    }
 
     const updatedBug = await prisma.bug.update({
       where: { id: bugId },
       data: {
         assignedTo: {
-          set: newUsers,
+          disconnect: userIds.map((id) => ({ id })),
         },
       },
-      include: {
-        assignedTo: true,
-      },
+      include: { assignedTo: true },
     });
 
     res.status(200).json(updatedBug);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// search users to assign in bug by email which should be in project
+//GET: api/bugs/:bugId/users?query=<searchTerm>&projectId=<projectId>
+export const searchUsersForBugs = async (
+  req: Request<RemoveAssignedParams, any, removeAssignedUsersBody>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { query, projectId } = req.query as {
+      query?: string;
+      projectId?: string;
+    };
+    const { bugId } = req.params;
+
+    const searchQuery = Array.isArray(query) ? query[0] : query;
+    const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
+
+    if (!searchQuery || searchQuery.trim() === "") {
+      return res.json([]);
+    }
+
+    if (!projectIdStr) {
+      return res.status(400).json({ error: "projectId is required" });
+    }
+
+    const projectIdNum = parseInt(projectIdStr);
+    const bugIdNum = parseInt(bugId);
+
+    if (isNaN(projectIdNum) || isNaN(bugIdNum)) {
+      return res.status(400).json({ error: "Invalid projectId or bugId" });
+    }
+
+    // Get users in project, matching email, NOT already assigned to this bug
+    const users = await prisma.user.findMany({
+      where: {
+        memberships: {
+          some: {
+            projectId: projectIdNum,
+          },
+        },
+        email: {
+          contains: searchQuery.trim(),
+          mode: "insensitive",
+        },
+        assignedBugs: {
+          none: {
+            id: bugIdNum, // Exclude users already assigned to this bug
+          },
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
+      take: 10,
+    });
+
+    return res.json(users);
   } catch (error) {
     next(error);
   }
