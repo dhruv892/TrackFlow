@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Board from "./board/Board";
 import List from "./list/List";
 import { useProjectStoreState } from "../store/ui";

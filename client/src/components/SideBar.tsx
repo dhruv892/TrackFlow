@@ -1,5 +1,3 @@
-import React from "react";
-
 function SideBar() {
   return (
     <div className="w-64 border-r-2 pr-2 border-gray-700">
