@@ -124,6 +124,7 @@ export const removeUserFromProject = async (
     res.status(200).json({ message: "User removed from project", removed });
   } catch (error) {
     // next(error);
+    console.error("Error removing user from project:", error);
     return next(new InternalServerError("Failed to remove user from project"));
   }
 };
@@ -195,6 +196,7 @@ export const updateUserRole = async (
       .status(200)
       .json({ message: "User role updated successfully", updatedMembership });
   } catch (error) {
+    console.error("Error updating user role:", error);
     // next(error);
     return next(new InternalServerError("Failed to update user role"));
   }
@@ -234,6 +236,7 @@ export const getProjectMembers = async (
 
     res.status(200).json({ members });
   } catch (error) {
+    console.error("Error getting project members:", error);
     // next(error);
     return next(new InternalServerError("Failed to get project members"));
   }

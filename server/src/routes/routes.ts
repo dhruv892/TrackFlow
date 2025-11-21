@@ -1,15 +1,9 @@
-import {
-  Router,
-  type NextFunction,
-  type Response,
-  type Request,
-} from "express";
+import { Router, type Response, type Request } from "express";
 import bugsRouter from "./bugRoutes.js";
 import userRouter from "./userRoutes.js";
 import commentsRouter from "./commentRoutes.js";
 import authRouter from "./authRoutes.js";
 import { CustomError } from "../errors/CustomError.js";
-import { auth } from "../middleware/auth.js";
 import projectsRouter from "./projectRoutes.js";
 import projectsMembershipsRouter from "./projectMembershipRoutes.js";
 
@@ -29,29 +23,22 @@ router.use("/projects", projectsRouter);
 router.use("/project-membership", projectsMembershipsRouter);
 
 // Error middleware
-router.use(
-  (
-    err: CustomError | Error,
-    _req: Request,
-    res: Response,
-    _next: NextFunction
-  ) => {
-    console.error(err);
+router.use((err: CustomError | Error, _req: Request, res: Response) => {
+  console.error(err);
 
-    if (err instanceof CustomError) {
-      res.status(err.statusCode).send({
-        name: err.name,
-        msg: err.message,
-        statusCode: err.statusCode,
-      });
-    } else {
-      res.status(500).send({
-        name: "InternalServerError",
-        msg: err.message || "An unexpected error occurred.",
-        statusCode: 500,
-      });
-    }
+  if (err instanceof CustomError) {
+    res.status(err.statusCode).send({
+      name: err.name,
+      msg: err.message,
+      statusCode: err.statusCode,
+    });
+  } else {
+    res.status(500).send({
+      name: "InternalServerError",
+      msg: err.message || "An unexpected error occurred.",
+      statusCode: 500,
+    });
   }
-);
+});
 
 export default router;

@@ -70,7 +70,7 @@ type BugParams = { bugId: string };
 export const getBug = async (
   req: Request<BugParams>,
   res: Response,
-  next: any
+  next: NextFunction
 ) => {
   try {
     const id = parseInt(req.params.bugId);
@@ -120,12 +120,13 @@ type CreateBugParams = {
   projectId: string;
 };
 export const createBug = async (
-  req: Request<CreateBugParams, any, CreateBugBody>,
+  req: Request<CreateBugParams, unknown, CreateBugBody>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    let { title, description, status, priority } = req.body;
+    let { description, status, priority } = req.body;
+    const title = req.body.title;
 
     if (!req.user)
       return res.status(401).json({ message: "Not authenticated" });
@@ -168,7 +169,7 @@ export const createBug = async (
       },
     });
     res.status(201).json(bug);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating the bug:", error);
 
     if (error instanceof CustomError) return next(error);
@@ -190,7 +191,7 @@ type UpdateBugPayload = {
 };
 
 export const updateBug = async (
-  req: Request<UpdateBugParams, any, UpdateBugPayload>,
+  req: Request<UpdateBugParams, unknown, UpdateBugPayload>,
   res: Response,
   next: NextFunction
 ) => {
@@ -267,7 +268,7 @@ export const updateBug = async (
     });
 
     res.status(200).json(updatedBug);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Update bug error:", error);
     if (error instanceof CustomError) return next(error);
     else {
@@ -277,11 +278,7 @@ export const updateBug = async (
   }
 };
 
-export const deleteBug = async (
-  req: Request<BugParams>,
-  res: Response,
-  next: NextFunction
-) => {
+export const deleteBug = async (req: Request<BugParams>, res: Response) => {
   try {
     const bugId = Number(req.params.bugId);
 
@@ -337,9 +334,8 @@ type AssignUserToBugBody = {
   userIds: number[];
 };
 export const assignUserToBug = async (
-  req: Request<AssignUserToBugParams, any, AssignUserToBugBody>,
-  res: Response,
-  next: NextFunction
+  req: Request<AssignUserToBugParams, unknown, AssignUserToBugBody>,
+  res: Response
 ) => {
   try {
     const bugId = Number(req.params.bugId);
@@ -404,7 +400,7 @@ type RemoveAssignedParams = {
   bugId: string;
 };
 export const removeAllAssignedUsers = async (
-  req: Request<RemoveAssignedParams, any, {}>,
+  req: Request<RemoveAssignedParams, unknown, object>,
   res: Response,
   next: NextFunction
 ) => {
@@ -467,7 +463,7 @@ type removeAssignedUsersBody = {
   userIds: number[];
 };
 export const removeAssignedUsers = async (
-  req: Request<RemoveAssignedParams, any, removeAssignedUsersBody>,
+  req: Request<RemoveAssignedParams, unknown, removeAssignedUsersBody>,
   res: Response,
   next: NextFunction
 ) => {
@@ -532,7 +528,7 @@ export const removeAssignedUsers = async (
 // search users to assign in bug by email which should be in project
 //GET: api/bugs/:bugId/users?query=<searchTerm>&projectId=<projectId>
 export const searchUsersForBugs = async (
-  req: Request<RemoveAssignedParams, any, removeAssignedUsersBody>,
+  req: Request<RemoveAssignedParams, unknown, removeAssignedUsersBody>,
   res: Response,
   next: NextFunction
 ) => {

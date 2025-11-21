@@ -68,6 +68,7 @@ export const createProject = async (
     res.status(201).json(project);
   } catch (error) {
     // next(error);
+    console.error("Error creating project:", error);
     return next(new InternalServerError("Failed to create project"));
   }
 };
@@ -177,6 +178,7 @@ export const deleteProject = async (
     await prisma.project.delete({ where: { id: projectId } });
     res.status(200).json({ message: "Project deleted successfully" });
   } catch (error) {
+    console.error("Error deleting project:", error);
     // next(error);
     return next(new InternalServerError("Failed to delete project"));
   }

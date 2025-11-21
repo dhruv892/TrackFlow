@@ -3,7 +3,6 @@ import {
   assignUserToBug,
   createBug,
   deleteBug,
-  getAllBugs,
   getBug,
   removeAllAssignedUsers,
   removeAssignedUsers,

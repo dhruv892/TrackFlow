@@ -72,8 +72,6 @@ jobs:
       - name: Run database migrations
         working-directory: server
         run: npx prisma migrate deploy
-        # env:
-        #   DATABASE_URL: ${{ env.DATABASE_URL }}
 
       # --------------------------------------------
       # BUILD FRONTEND
@@ -85,12 +83,16 @@ jobs:
         run: npm run build
 
       # --------------------------------------------
-      # TYPE-CHECK + LINT (OPTIONAL)
+      # TYPE-CHECK + LINT
       # --------------------------------------------
-      # - name: Lint (Client)
-      #   working-directory: client
-      #   run: npm run lint
+      - name: Lint + Type Check (Client)
+        working-directory: client
+        run: |
+          npm run lint --if-present
+          npm run type-check --if-present
 
-      # - name: Type Check Server
-      #   working-directory: server
-      #   run: npm run type-check
+      - name: Lint + Type Check (Server)
+        working-directory: server
+        run: |
+          npm run lint --if-present
+          npm run type-check --if-present

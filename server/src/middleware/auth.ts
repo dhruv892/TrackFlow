@@ -2,18 +2,6 @@ import type { Request, Response, NextFunction } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { AccessDeniedError, CustomError } from "../errors/CustomError.js";
 
-// type requestData = {
-//   user: string;
-// };
-
-// declare global {
-//   namespace Express {
-//     interface Request {
-//       user?: JwtPayload;
-//     }
-//   }
-// }
-
 export const auth = (req: Request, res: Response, next: NextFunction) => {
   const token = req.cookies.token;
   if (!token)

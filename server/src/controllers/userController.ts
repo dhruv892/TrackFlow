@@ -15,7 +15,7 @@ type loginUserPayload = {
   password: string;
 };
 export const loginUser = async (
-  req: Request<{}, any, loginUserPayload>,
+  req: Request<unknown, unknown, loginUserPayload>,
   res: Response,
   next: NextFunction
 ) => {
@@ -58,7 +58,7 @@ type CreateUserBody = {
   password: string;
 };
 export const createUser = async (
-  req: Request<{}, any, CreateUserBody>,
+  req: Request<object, unknown, CreateUserBody>,
   res: Response,
   next: NextFunction
 ) => {
@@ -96,7 +96,7 @@ export const createUser = async (
     });
 
     res.json(user);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(error);
 
     if (error instanceof CustomError) return next(error);
@@ -131,7 +131,11 @@ export const updateUser = async (
     if (!user) throw new NotFoundError(`User with id ${userId} not found.`);
 
     const { email, name, password } = req.body;
-    let updateData = Object();
+    const updateData: Partial<{
+      email: string;
+      name: string;
+      password: string;
+    }> = {};
 
     if (email !== undefined && email.trim().length !== 0) {
       const duplicate = await prisma.user.findUnique({
@@ -170,7 +174,7 @@ type getUserInfoParam = {
 };
 
 export const getUserDeletionInfo = async (
-  req: Request<getUserInfoParam, any, {}>,
+  req: Request<getUserInfoParam, unknown, object>,
   res: Response,
   next: NextFunction
 ) => {
@@ -199,7 +203,7 @@ type deleteUserParams = {
   userId: string;
 };
 export const deleteUser = async (
-  req: Request<deleteUserParams, any, {}>,
+  req: Request<deleteUserParams, unknown, object>,
   res: Response,
   next: NextFunction
 ) => {
@@ -248,7 +252,7 @@ type getUserParam = {
   userId: string;
 };
 export const getUser = async (
-  req: Request<getUserParam, any, {}>,
+  req: Request<getUserParam, unknown, object>,
   res: Response,
   next: NextFunction
 ) => {

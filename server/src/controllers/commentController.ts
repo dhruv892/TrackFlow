@@ -66,7 +66,7 @@ type createCommentBody = {
   authorId: number;
 };
 export const createComment = async (
-  req: Request<BugIdParam, any, createCommentBody>,
+  req: Request<BugIdParam, unknown, createCommentBody>,
   res: Response,
   next: NextFunction
 ) => {
@@ -138,7 +138,7 @@ type UpdateCommentBody = {
 };
 
 export const updateComment = async (
-  req: Request<UpdateCommentParams, any, UpdateCommentBody>,
+  req: Request<UpdateCommentParams, unknown, UpdateCommentBody>,
   res: Response,
   next: NextFunction
 ) => {
@@ -171,7 +171,7 @@ type DeleteCommentParam = {
   commentId: string;
 };
 export const deleteComment = async (
-  req: Request<DeleteCommentParam, any, {}>,
+  req: Request<DeleteCommentParam, unknown, object>,
   res: Response,
   next: NextFunction
 ) => {

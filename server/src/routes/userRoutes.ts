@@ -1,11 +1,9 @@
 import { Router } from "express";
 import {
-  createUser,
   deleteUser,
   getAllUsers,
   getUser,
   getUserDeletionInfo,
-  loginUser,
   updateUser,
 } from "../controllers/userController.js";
 import { auth } from "../middleware/auth.js";
