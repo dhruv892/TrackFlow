@@ -96,3 +96,32 @@ jobs:
         run: |
           npm run lint --if-present
           npm run type-check --if-present
+
+      # --------------------------------------------
+      # RUN TESTS
+      # --------------------------------------------
+      - name: Run server tests
+        working-directory: server
+        run: npm test
+
+      # Start server in background
+      - name: Start backend server
+        working-directory: server
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+        run: npm run dev &
+
+      # Wait for server readiness
+      - name: Wait for server to be ready
+        run: |
+          npm install -g wait-on
+          wait-on http://localhost:3000/api/health --timeout 30000
+
+      # Run client tests
+      - name: Run Playwright E2E tests
+        working-directory: client
+        env:
+          VITE_API_URL: http://localhost:3000
+        run: |
+          npx playwright install chromium --with-deps
+          npm run test:e2e

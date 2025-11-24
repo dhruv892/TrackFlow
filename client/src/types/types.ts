@@ -40,6 +40,7 @@ export interface Bug {
     email: string;
   };
   assignedTo?: User[];
+  projectId: number;
 }
 
 export interface Comment {

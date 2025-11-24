@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { axiosInstance } from "../api/api";
 import type { Bug, User } from "../types/types";
 import { useProjectStoreState } from "./ui";
+import { useAuthStore } from "./auth";
 
 export type BugStoreState = {
   isBugsLoading: boolean;
@@ -43,7 +44,31 @@ export const useBugStore = create<BugStoreState>((set, get) => ({
   },
   addBug: async (bug: Partial<Bug>) => {
     // Use negative number for temp IDs (real IDs are always positive)
-    const tempBug = { ...bug, id: -Date.now() } as Bug;
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser) {
+      console.error("No user logged in");
+      return null;
+    }
+
+    // Create temp bug with author details from current user
+    const tempBug: Bug = {
+      id: -Date.now(),
+      title: bug.title || "",
+      description: bug.description || "",
+      status: bug.status || "todo",
+      priority: bug.priority || "medium",
+      userId: currentUser.id,
+      author: {
+        id: currentUser.id,
+        name: currentUser.name || "Unknown",
+        email: currentUser.email || "unknown@example.com",
+      },
+      assignedTo: bug.assignedTo || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      projectId: useProjectStoreState.getState().currentProjectId!,
+    };
+
     // Add temp bug immediately
     set((state) => ({ allBugs: [tempBug, ...state.allBugs] }));
     const projectId = useProjectStoreState.getState().currentProjectId;

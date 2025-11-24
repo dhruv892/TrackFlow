@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { Bug } from "../../types/types";
 import { Loader2, Plus } from "lucide-react";
 import { useBugStore } from "../../store/bugs";
@@ -15,10 +15,11 @@ function List() {
 
   // const { groupBy, setGroupBy } = useUIStore();
   const { groupBy, setGroupBy, getGroupedBugs } = useUIStore();
-  const groupedBugs = useMemo(
-    () => getGroupedBugs(),
-    [getGroupedBugs, groupBy, allBugs]
-  );
+  // const groupedBugs = useMemo(
+  //   () => getGroupedBugs(),
+  //   [getGroupedBugs, groupBy, allBugs]
+  // );
+  const groupedBugs = getGroupedBugs();
 
   useEffect(() => {
     getAllBugs();
