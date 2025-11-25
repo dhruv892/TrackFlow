@@ -31,7 +31,7 @@ export const useProjectStore = create<ProjectStoreState>((set, get) => ({
     set({ isLoading: true });
     try {
       const response = await axiosInstance.get<Project[]>("/projects");
-      const all = response.data;
+      const all = Array.isArray(response.data) ? response.data : [];
       // Group immediately in store
       const createdByMe = all.filter((p) => p.authorId === userId);
       const memberOf = all.filter((p) =>
